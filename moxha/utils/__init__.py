@@ -1,9 +1,11 @@
 from . import postprocess
-from . import spectralfits
 from . import tools
 from . import observations
 
-
+try:
+    from . import spectralfits
+except:
+    pass
 try:
     from . import profilefits 
 except:
