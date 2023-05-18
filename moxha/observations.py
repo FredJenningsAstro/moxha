@@ -1047,34 +1047,34 @@ class Observation:
         emis_field = str(f"xray_emissivity_{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV")
         
         plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, "mass")], weight_field=None)
-        plot.save(yt_data_path / f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_mass_phaseplot.png")
+        plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_mass_phaseplot.png")
 
         plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, lumin_field)], weight_field=None)
-        plot.save(yt_data_path / f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_luminosity_phaseplot.png")
+        plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_luminosity_phaseplot.png")
         
         plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, emis_field)], weight_field=None)
-        plot.save(yt_data_path / f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_emissivity_phaseplot.png")
+        plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_emissivity_phaseplot.png")
         
         plot = yt.PhasePlot(self.sp, (ptype, emis_field), (ptype, lumin_field), [(ptype, density)], weight_field=None)
-        plot.save(yt_data_path / f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__emis_vs_luminosity_vs_density_phaseplot.png")
+        plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__emis_vs_luminosity_vs_density_phaseplot.png")
         
         plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "metallicity"), [(ptype, lumin_field)], weight_field=None)
-        plot.save(yt_data_path / f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_metallicity_vs_luminosity_phaseplot.png")
+        plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_metallicity_vs_luminosity_phaseplot.png")
         
         plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "metal_mass"), [(ptype, lumin_field)], weight_field=None)
-        plot.save(yt_data_path / f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_metal_mass_vs_luminosity_phaseplot.png")
+        plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_metal_mass_vs_luminosity_phaseplot.png")
         
         plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, lumin_field)], weight_field=None)
-        plot.save(yt_data_path / f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_luminosity_phaseplot.png")
+        plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_luminosity_phaseplot.png")
         
         plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, "density")], weight_field=None)
-        plot.save(yt_data_path / f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_density_phaseplot.png")
+        plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_density_phaseplot.png")
         
         plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, "temperature")], weight_field=None)
-        plot.save(yt_data_path / f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_T_phaseplot.png")
+        plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_T_phaseplot.png")
         
         plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, "metallicity")], weight_field=None)
-        plot.save(yt_data_path / f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_metallicity_phaseplot.png")
+        plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_metallicity_phaseplot.png")
 
 
 
