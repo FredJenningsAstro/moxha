@@ -1,1 +1,1 @@
-include moxha/instr_files
+include moxha/instr_files/*
