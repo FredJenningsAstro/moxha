@@ -1,14 +1,14 @@
-from . import postprocess.py
-from . import spectralfits.py
-from . import tools.py
-from . import observations.py
+from . import postprocess
+from . import spectralfits
+from . import tools
+from . import observations
 
 
 try:
-    from . import profilefits.py 
+    from . import profilefits 
 except:
     pass
 try:
-    from . import tessmaps.py       
+    from . import tessmaps       
 except:
     pass
