@@ -19,7 +19,7 @@ from astropy.io import fits
 # yt.set_log_level(40)
 import soxs
 
-soxs.set_soxs_config("soxs_data_dir", f"{str(path.dirname(moxha.__file__))}/moxha/instr_files/")
+soxs.set_soxs_config("soxs_data_dir", f"{str(os.path.dirname(moxha.__file__))}/moxha/instr_files/")
 
 class Observation:
     
