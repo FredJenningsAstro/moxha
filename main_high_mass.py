@@ -2,7 +2,7 @@ from moxha.observations import Observation
 from mpi4py import MPI
 import unyt
 import caesar
-
+import numpy as np
 
 
 redshift = 0.035
@@ -51,8 +51,8 @@ cuts_dict = [{'field':('gas','H_nuclei_density'), 'less_than':(0.1)*unyt.cm**-3}
             {'field':("PartType0", "StarFormationRate"), 'equals':0}]
 
 
-instruments_dict = [ {"Name":"lem_2.0eV","ID":"lem_2eV_1Ms", "exp_time": (1000,'ks'), "reblock":1},]
-obs = Observation(SNAPFILE, snapnum, save_dir = "./08052023_LEM/", run_ID= f"m100s50", emin = 0.05, emax = 10, emin_for_EW_values=0.2, emax_for_EW_values=3.0, redshift = redshift)
+instruments_dict = [ {"Name":"lem_2eV","ID":"lem_2eV_1Ms", "exp_time": (1000,'ks'), "reblock":1},]
+obs = Observation(SNAPFILE, snapnum, save_dir = "./08052023_LEM/", run_ID= f"m100s50", emin = 0.05, emax = 10, emin_for_EW_values=0.2, emax_for_EW_values=3.0, redshift = redshift, energies_for_Lx_tot= [[0.2,3.0]])
 for instr in instruments_dict: obs.add_instrument(**instr )
 obs.load_ds()
 for cut in cuts_dict:obs.add_cut(**cut )

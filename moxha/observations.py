@@ -98,16 +98,19 @@ class Observation:
         athena_chip_ctr_arcsec = 632.37
         chip_width_arcsec = 1144.08213373        
         
-        if test_align:
-            self._instrument_defaults = [
-                {"Name":"athena_wfi", "aim_shift": [-125 +  athena_chip_ctr_arcsec - chip_width_arcsec/2, 118 -  athena_chip_ctr_arcsec + chip_width_arcsec/2], "chip_width":250 },
-            ]
-        else:
-            self._instrument_defaults = [
-                {"Name":"athena_wfi", "aim_shift": [-125 +  athena_chip_ctr_arcsec, 118 -  athena_chip_ctr_arcsec ], "chip_width":250 },
-                {"Name":"lem_0.9eV", "aim_shift": [0.0, 0.0], "chip_width":64, 'image_width':1.08 },
-                {"Name":"lem_2eV", "aim_shift": [0.0, 0.0], "chip_width":64, 'image_width':1.08 },
-            ]            
+        try:
+            if test_align:
+                self._instrument_defaults = [
+                    {"Name":"athena_wfi", "aim_shift": [-125 +  athena_chip_ctr_arcsec - chip_width_arcsec/2, 118 -  athena_chip_ctr_arcsec + chip_width_arcsec/2], "chip_width":250 },
+                ]
+            else:
+                self._instrument_defaults = [
+                    {"Name":"athena_wfi", "aim_shift": [-125 +  athena_chip_ctr_arcsec, 118 -  athena_chip_ctr_arcsec ], "chip_width":250 },
+                    {"Name":"lem_0.9eV", "aim_shift": [0.0, 0.0], "chip_width":64, 'image_width':1.08 },
+                    {"Name":"lem_2eV", "aim_shift": [0.0, 0.0], "chip_width":64, 'image_width':1.08 },
+                ]   
+        except:
+            raise RuntimeError('Default instrument values could not be loaded. Make sure instrument name is one of: athena_wfi, lem_0.9eV, lem_2eV')        
             
             
             
@@ -346,6 +349,7 @@ class Observation:
                             var_elem={var_elem}, thermal_broad={self._thermal_broad}''') 
             
         if self._pyxsim_source_model == "IGM for Gerrit 18052023":   
+            var_elem = {elem.split("_")[0]: ("filtered_gas", "{0}".format(elem)) for elem in metals}  
             print(f"Using LEM mock settings 18052023 with emin = {self._photons_emin}, emax = {self._photons_emax}, nbins = {nbins}")
             self._photons_emin = 0.2
             self._photons_emax = 3.0
