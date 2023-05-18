@@ -316,26 +316,39 @@ class Observation:
         else:
             self._logger.info("No Cut being made on the data before observation")
 
-        print(f"Making CIE Source model with emin = {self._photons_emin}, emax = {self._photons_emax}")
+        
         
         if self._pyxsim_source_model == "CIE APEC":
+            print(f"Making CIE Source model with emin = {self._photons_emin}, emax = {self._photons_emax}, nbins = {nbins}")
             if self._const_metals:
                 self._logger.warning(f"const_metals set to {self._const_metals}. Zmet will be set to constant 0.3")
                 self._source_model = pyxsim.CIESourceModel("apec", emin = self._photons_emin, emax = self._photons_emax, nbins = nbins, 
                             Zmet = 0.3, temperature_field = ("filtered_gas","temperature"), 
                             emission_measure_field= ('filtered_gas', 'emission_measure'),
                             thermal_broad=self._thermal_broad)
+                self._logger.info(f'''CIE Model Pars:
+                "apec", emin = {self._photons_emin}, emax = {self._photons_emax}, nbins = {nbins}, 
+                            Zmet = 0.3, temperature_field = ("filtered_gas","temperature"), 
+                            emission_measure_field= ('filtered_gas', 'emission_measure'),
+                            thermal_broad={self._thermal_broad}''') 
             else:
                 var_elem = {elem.split("_")[0]: ("filtered_gas", "{0}".format(elem)) for elem in metals}       
                 self._source_model = pyxsim.CIESourceModel("apec", emin = self._photons_emin, emax = self._photons_emax, nbins = nbins, 
                             Zmet = ("filtered_gas", "metallicity"), temperature_field = ("filtered_gas","temperature"), 
                             emission_measure_field= ('filtered_gas', 'emission_measure'),
-                            var_elem=var_elem, thermal_broad=self._thermal_broad)     
+                            var_elem=var_elem, thermal_broad=self._thermal_broad)    
+                
+                self._logger.info(f'''CIE Model Pars:
+                "apec", emin = {self._photons_emin}, emax = {self._photons_emax}, nbins = {nbins}, 
+                            Zmet = ("filtered_gas", "metallicity"), temperature_field = ("filtered_gas","temperature"), 
+                            emission_measure_field= ('filtered_gas', 'emission_measure'),
+                            var_elem={var_elem}, thermal_broad={self._thermal_broad}''') 
             
         if self._pyxsim_source_model == "IGM for Gerrit 18052023":   
-            print("Using LEM mock settings 18052023")
+            print(f"Using LEM mock settings 18052023 with emin = {self._photons_emin}, emax = {self._photons_emax}, nbins = {nbins}")
             self._photons_emin = 0.2
             self._photons_emax = 3.0
+            
             self._source_model = pyxsim.IGMSourceModel(
             0.2,
             3.0,
@@ -350,6 +363,19 @@ class Observation:
             emission_measure_field= ('filtered_gas', 'emission_measure'),
             var_elem=var_elem,          
         )
+            self._logger.info(f'''IGM Model Pars:
+            0.2,
+            3.0,
+            nbins = {nbins},
+            binscale="linear",
+            resonant_scattering=True,
+            cxb_factor=0.5,
+            kT_max=30.0,
+            Zmet = ("filtered_gas", "metallicity"), 
+            nh_field=("filtered_gas","H_nuclei_density"),
+            temperature_field = ("filtered_gas","temperature"), 
+            emission_measure_field= ('filtered_gas', 'emission_measure'),
+            var_elem={var_elem},''')
             
             
         # yt.add_xray_emissivity_field(self.ds, self.emin_for_EW_values, self.emax_for_EW_values, table_type="apec", metallicity = (self.generator_field, "metallicity") , redshift=self.redshift, cosmology=self.ds.cosmology, data_dir="./CODE/instr_files/")
@@ -533,6 +559,12 @@ class Observation:
                 soxs.instrument_simulator(f"{self._idx_tag}_halo_simput.fits", f"{evts_path}/{idx_instr_tag}_evt.fits", obs_exp_time,
                                           instrument_name, [30., 45.], overwrite=True, instr_bkgnd = self._instr_bkgnd, foreground=self._foreground, ptsrc_bkgnd =self._ptsrc_bkgnd, aimpt_shift = aim_shift, no_dither = no_dither)
                 self._write_log("obs",f"Instrument Simulation Complete")
+                
+                self._logger.info(f'''instrument_simulator Pars:{self._idx_tag}_halo_simput.fits", {evts_path}/{idx_instr_tag}_evt.fits", {obs_exp_time}, {instrument_name}, [30., 45.], overwrite=True, instr_bkgnd = {self._instr_bkgnd}, foreground={self._foreground}, ptsrc_bkgnd ={self._ptsrc_bkgnd}, aimpt_shift = {aim_shift}, no_dither = {no_dither}''')
+                self._logger.info(f"Current SOXS Instrument Registry for instr: {soxs.instrument_registry[instrument_name]}")
+                
+                
+                
                 soxs.write_spectrum(f"{evts_path}/{idx_instr_tag}_evt.fits", f"{evts_path}/{idx_instr_tag}_evt.pha", overwrite=True)
                 fig, ax = soxs.plot_spectrum(f"{evts_path}/{idx_instr_tag}_evt.pha", xmin=spectrum_plot_emin, xmax=spectrum_plot_emax, lw = 0.5, color = "black" )
                 fig.set_size_inches((15,5))
