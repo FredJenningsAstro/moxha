@@ -13,13 +13,12 @@ import math
 from matplotlib import cm as mplcm
 import matplotlib.pyplot as plt
 import logging
-from tqdm import tqdm
-from numpy.random import uniform
+
 from .tools import *
 from astropy.io import fits
 # yt.set_log_level(40)
 import soxs
-soxs.set_soxs_config("soxs_data_dir", "./CODE/instr_files/")
+soxs.set_soxs_config("soxs_data_dir", "../instr_files/")
 
 class Observation:
     
