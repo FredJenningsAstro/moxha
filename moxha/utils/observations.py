@@ -255,7 +255,7 @@ class Observation:
         return simba_rho_th
 
     
-    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, thermal_model = "apec", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = 1200, only_profiles = False, make_profiles = True, overwrite = False):
+    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = 1200, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False):
         '''
         Function to use pyXSIM to generate photon lists for the active halos and then project the photons. We use pyXSIM's CIE Source Model. 
         ------------------------------------------------
@@ -265,7 +265,7 @@ class Observation:
                         metals: A list of metal fields to use in the source model. Default = None
                         photons_emin: Minimum energy to generate the photons for in keV. If smaller than self.emin, will be set to self.emin. Default = 0
                         photons_emax: Maximum energy to generate the photons for in keV. If larger than self.emax, will be set to self.emax. Default = 10
-                        thermal_model: pyXSIM thermal model. default = "apec"
+                        model: pyXSIM model. Options: "CIE APEC", "IGM".  Default = "CIE APEC". 
                         nh_val: Foreground galactic column density in 10^22/cm^2. Default = 0.018
                         absorb_model: foreground absorption model, as accepted by pyXSIM. Default = "tbabs"
                         sphere_R500s: A sphere of radius sphere_R500s * halo R500 will be cut out from the dataset and used to generate the photons. Default = 3
@@ -297,7 +297,7 @@ class Observation:
         self._photon_exp_time = (photon_sample_exp,'ks')
         self._area = area
         os.makedirs(self._top_save_path/"LOGS", exist_ok = True)     
-        self._thermal_model = thermal_model   
+        self._pyxsim_source_model = model   
         self._thermal_broad = thermal_broad
         self._const_metals = const_metals
         self._absorb_model = absorb_model
@@ -317,18 +317,39 @@ class Observation:
             self._logger.info("No Cut being made on the data before observation")
 
         print(f"Making CIE Source model with emin = {self._photons_emin}, emax = {self._photons_emax}")
-        if self._const_metals:
-            self._logger.warning(f"const_metals set to {self._const_metals}. Zmet will be set to constant 0.3")
-            self._source_model = pyxsim.CIESourceModel(self._thermal_model, emin = self._photons_emin, emax = self._photons_emax, nbins = nbins, 
-                        Zmet = 0.3, temperature_field = ("filtered_gas","temperature"), 
-                        emission_measure_field= ('filtered_gas', 'emission_measure'),
-                         thermal_broad=self._thermal_broad)
-        else:
-            var_elem = {elem.split("_")[0]: ("filtered_gas", "{0}".format(elem)) for elem in metals}       
-            self._source_model = pyxsim.CIESourceModel(self._thermal_model, emin = self._photons_emin, emax = self._photons_emax, nbins = nbins, 
-                        Zmet = ("filtered_gas", "metallicity"), temperature_field = ("filtered_gas","temperature"), 
-                        emission_measure_field= ('filtered_gas', 'emission_measure'),
-                        var_elem=var_elem, thermal_broad=self._thermal_broad)     
+        
+        if self._pyxsim_source_model == "CIE APEC":
+            if self._const_metals:
+                self._logger.warning(f"const_metals set to {self._const_metals}. Zmet will be set to constant 0.3")
+                self._source_model = pyxsim.CIESourceModel("apec", emin = self._photons_emin, emax = self._photons_emax, nbins = nbins, 
+                            Zmet = 0.3, temperature_field = ("filtered_gas","temperature"), 
+                            emission_measure_field= ('filtered_gas', 'emission_measure'),
+                            thermal_broad=self._thermal_broad)
+            else:
+                var_elem = {elem.split("_")[0]: ("filtered_gas", "{0}".format(elem)) for elem in metals}       
+                self._source_model = pyxsim.CIESourceModel("apec", emin = self._photons_emin, emax = self._photons_emax, nbins = nbins, 
+                            Zmet = ("filtered_gas", "metallicity"), temperature_field = ("filtered_gas","temperature"), 
+                            emission_measure_field= ('filtered_gas', 'emission_measure'),
+                            var_elem=var_elem, thermal_broad=self._thermal_broad)     
+            
+        if self._pyxsim_source_model == "IGM for Gerrit 18052023":   
+            print("Using LEM mock settings 18052023")
+            self._photons_emin = 0.2
+            self._photons_emax = 3.0
+            self._source_model = pyxsim.IGMSourceModel(
+            0.2,
+            3.0,
+            nbins = nbins,
+            binscale="linear",
+            resonant_scattering=True,
+            cxb_factor=0.5,
+            kT_max=30.0,
+            Zmet = ("filtered_gas", "metallicity"), 
+            nh_field=("filtered_gas","H_nuclei_density"),
+            temperature_field = ("filtered_gas","temperature"), 
+            emission_measure_field= ('filtered_gas', 'emission_measure'),
+            var_elem=var_elem,          
+        )
             
             
         # yt.add_xray_emissivity_field(self.ds, self.emin_for_EW_values, self.emax_for_EW_values, table_type="apec", metallicity = (self.generator_field, "metallicity") , redshift=self.redshift, cosmology=self.ds.cosmology, data_dir="./CODE/instr_files/")
@@ -336,6 +357,7 @@ class Observation:
         #     yt.add_xray_emissivity_field(self.ds, emin_for_Lx_tot, emax_for_Lx_tot, table_type="apec", metallicity = (self.generator_field, "metallicity") , redshift=self.redshift, cosmology=self.ds.cosmology, data_dir="./CODE/instr_files/")
     
         self._source_model.make_source_fields(self.ds, self.emin_for_EW_values, self.emax_for_EW_values)   
+        
         for emin_for_Lx_tot, emax_for_Lx_tot in self.energies_for_Lx_tot:
             self._source_model.make_source_fields(self.ds, emin_for_Lx_tot, emax_for_Lx_tot)
              
@@ -368,7 +390,10 @@ class Observation:
             self.sp_of_R500 = self.ds.sphere(halo_center, self.R500)
             if self.R200 != None:
                 self.sp_of_R200 = self.ds.sphere(halo_center, self.R200)
-                
+            
+            
+            if make_phaseplots:
+                self._yT_phaseplots()
 
             if make_profiles:
                 self._yT_profiles()
@@ -434,7 +459,7 @@ class Observation:
             
             
             
-    def ObservePhotons(self, image_energies = None, instr_bkgnd = True, foreground = False, ptsrc_bkgnd = True, no_dither = False, overwrite = False, write_foreground_spectrum = False, spectrum_plot_emin = None, spectrum_plot_emax = None, delete_photon_files = False):
+    def ObservePhotons(self, image_energies = None, instr_bkgnd = True, foreground = False, ptsrc_bkgnd = True, no_dither = False, overwrite = False, write_foreground_spectrum = False, spectrum_plot_emin = None, spectrum_plot_emax = None, delete_photon_files = False, calibration_markers = False):
         '''
         Function to use SOXS to observe the event lists generated by pyXSIM. See https://hea-www.cfa.harvard.edu/soxs/index.html.
         ------------------------------------------------
@@ -531,19 +556,19 @@ class Observation:
                     ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
                     instrument_spec = instrument_registry[instrument_name]
 
-
-                    try:
-                        chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
-                        ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                    except:
-                        chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
-                        ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    if calibration_markers:
+                        try:
+                            chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
+                            ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                        except:
+                            chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
+                            ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
                 plt.savefig(f"{evts_path}/{idx_instr_tag}_img.png")
                 fig.clear() 
                 plt.close(fig)
@@ -561,19 +586,20 @@ class Observation:
                             ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
                             instrument_spec = instrument_registry[instrument_name]
 
-                            try:
-                                print("Using chip 1")
-                                chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
-                                ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            except:
-                                chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
-                                ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            if calibration_markers:
+                                try:
+                                    print("Using chip 1")
+                                    chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
+                                    ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                    ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                    ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                    ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                except:
+                                    chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
+                                    ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                    ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                    ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                    ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
                         plt.savefig(f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}.png")
                         fig.clear() 
                         plt.close(fig)              
@@ -590,19 +616,21 @@ class Observation:
                         center = np.array([float(hdul[0].header['CRPIX1']),float(hdul[0].header['CRPIX2'])] )
                         ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
                         instrument_spec = instrument_registry[instrument_name]   
-                    try:
-                       
-                        chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
-                        ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                    except:
-                        chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
-                        ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    
+                    if calibration_markers:    
+                        try:
+                            chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
+                            ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                        except:
+                            chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
+                            ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                        
                     plt.savefig(f"{evts_path}/{idx_instr_tag}_img_foregrounds.png")
                     fig.clear() 
                     plt.close(fig)
@@ -618,20 +646,21 @@ class Observation:
                                 center = np.array([float(hdul[0].header['CRPIX1']),float(hdul[0].header['CRPIX2'])] )
                                 ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
                                 instrument_spec = instrument_registry[instrument_name]
-
-                                try:
-                          
-                                    chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
-                                    ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                except:
-                                    chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
-                                    ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                
+                                if calibration_markers:
+                                    try:
+                                        chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
+                                        ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                    except:
+                                        chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
+                                        ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                    
                             plt.savefig(f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}_foregrounds.png")
                             fig.clear() 
                             plt.close(fig)      
@@ -737,7 +766,7 @@ class Observation:
                            
      
         
-    def BlankSkyBackgrounds(self,N):
+    def BlankSkyBackgrounds(self,N, calibration_markers = False):
         '''
         Function to use SOXS to generate mock blank-sky observations for the active instruments using the same set-up as used for ObservePhotons().
         ------------------------------------------------
@@ -790,19 +819,20 @@ class Observation:
                         ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
                         instrument_spec = instrument_registry[instrument_name]
 
-                        try:
-                    
-                            chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
-                            ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        except:
-                            chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
-                            ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                        if calibration_markers:
+                            try:
+                                chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
+                                ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            except:
+                                chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
+                                ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                            
                     plt.savefig(f"{evts_path}/{idx_instr_tag}_img.png")
                     fig.clear() 
                     plt.close(fig)
@@ -815,20 +845,21 @@ class Observation:
                                 center = np.array([float(hdul[0].header['CRPIX1']),float(hdul[0].header['CRPIX2'])] )
                                 ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
                                 instrument_spec = instrument_registry[instrument_name]
-
-                                try:
-                            
-                                    chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
-                                    ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                except:
-                                    chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
-                                    ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                    ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                
+                                if calibration_markers:
+                                    try:
+                                        chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
+                                        ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                    except:
+                                        chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
+                                        ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                        ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                                    
                             plt.savefig(f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}.png")
                             fig.clear() 
                             plt.close(fig)
@@ -921,15 +952,7 @@ class Observation:
                                n_bins = n_bins)   
         self._logger.info(f"Halo {self._idx_tag}: Successfully read True Luminosity Profile from Dataset")       
         
-        
-        
-            
-            
-            
-        
-        
-        
-        
+
         rp_data = []
         
         for emin_for_Lx_tot, emax_for_Lx_tot in self.energies_for_Lx_tot:
@@ -973,6 +996,54 @@ class Observation:
         self._logger.info("yT Data Successfully Taken")
         np.save(f"{yt_data_path}/{self._idx_tag}_yt_data_pyxsim.npy",rp_data)  
 
+
+
+
+
+    def _yT_phaseplots(self,):
+        self._logger.info(f"Generating yT Phaseplots")
+        yt_data_path = Path(self._top_save_path/"YT_DATA"/self._idx_tag)
+        os.makedirs(yt_data_path, exist_ok = True)   
+        
+        ptype = "filtered_gas" # ["PartType0","PartType1","PartType4","PartType5"]
+        lumin_field = str(f"xray_luminosity_{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV")
+        emis_field = str(f"xray_emissivity_{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV")
+        
+        plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, "mass")], weight_field=None)
+        plot.save(yt_data_path + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_mass_phaseplot.png")
+
+        plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, lumin_field)], weight_field=None)
+        plot.save(yt_data_path + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_luminosity_phaseplot.png")
+        
+        plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, emis_field)], weight_field=None)
+        plot.save(yt_data_path + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_emissivity_phaseplot.png")
+        
+        plot = yt.PhasePlot(self.sp, (ptype, emis_field), (ptype, lumin_field), [(ptype, density)], weight_field=None)
+        plot.save(yt_data_path + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__emis_vs_luminosity_vs_density_phaseplot.png")
+        
+        plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "metallicity"), [(ptype, lumin_field)], weight_field=None)
+        plot.save(yt_data_path + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_metallicity_vs_luminosity_phaseplot.png")
+        
+        plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "metal_mass"), [(ptype, lumin_field)], weight_field=None)
+        plot.save(yt_data_path + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_metal_mass_vs_luminosity_phaseplot.png")
+        
+        plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, lumin_field)], weight_field=None)
+        plot.save(yt_data_path + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_luminosity_phaseplot.png")
+        
+        plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, "density")], weight_field=None)
+        plot.save(yt_data_path + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_density_phaseplot.png")
+        
+        plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, "temperature")], weight_field=None)
+        plot.save(yt_data_path + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_T_phaseplot.png")
+        
+        plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, "metallicity")], weight_field=None)
+        plot.save(yt_data_path + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_metallicity_phaseplot.png")
+
+
+
+
+
+
         
         
         
@@ -985,7 +1056,7 @@ class Observation:
         self._write_log("obs",f"Area     = {self._area}")
         self._write_log("obs",f"photons emin     = {self._photons_emin} keV")
         self._write_log("obs",f"photons emax     = {self._photons_emax} keV")
-        self._write_log("obs",f"Model    = {self._thermal_model}")
+        self._write_log("obs",f"Model    = {self._pyxsim_source_model}")
         self._write_log("obs",f"Bounding Sphere Radius    = {self.sp.radius}")
         self._write_log("obs",f"-------------------------------")
         self._write_log("obs",f"Cuts on data:")
