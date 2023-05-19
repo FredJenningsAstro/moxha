@@ -48,7 +48,8 @@ class Observation:
     
     def __init__(self, box_path: str,snap_num: int, save_dir: str, run_ID: str, emin: float, emax: float, emin_for_EW_values:float, emax_for_EW_values:float, energies_for_Lx_tot:list, overwrite = False, redshift = "from_box", h = "from_box", test_align = False, enable_parallelism = False,):
         
-        # soxs.set_soxs_config("soxs_data_dir", f"{str(imp.find_module('moxha')[1])}/moxha/instr_files/")
+        print(f"setting soxs config loc to " + f"{str(imp.find_module('moxha')[1])}/instr_files/")
+        soxs.set_soxs_config("soxs_data_dir", f"{str(imp.find_module('moxha')[1])}/instr_files/")
         self._logger = logging.getLogger("MOXHA")
         if (self._logger.hasHandlers()):
             self._logger.handlers.clear()     
