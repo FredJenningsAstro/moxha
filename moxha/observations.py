@@ -1045,9 +1045,6 @@ class Observation:
         yt_data_path = Path(self._top_save_path/"YT_DATA"/self._idx_tag)
         os.makedirs(yt_data_path, exist_ok = True)   
         
-        plot.set_xlabel("x")
-        plot.set_ylabel("y")
-        plot.set_colorbar_label(("gas", "mass"),"cmap")
         
         ptype = "filtered_gas" # ["PartType0","PartType1","PartType4","PartType5"]
         lumin_field = str(f"xray_luminosity_{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV")
