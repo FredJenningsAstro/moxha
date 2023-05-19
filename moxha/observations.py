@@ -449,6 +449,10 @@ class Observation:
             # slc.show()            
             self._logger.info(f"Generating photons with exp time of {(float(self._photon_exp_time[0]), self._photon_exp_time[1])}, collecting area = {self._area}, redshift = {self.redshift}")
             n_photons, n_cells = pyxsim.make_photons(f"{photons_path}/{self._idx_tag}_photons", self.sp, self.redshift, self._area, (float(self._photon_exp_time[0]), self._photon_exp_time[1]), self._source_model, point_sources= False, center = self.sp.center, )
+            
+            self._logger.info(f'''Make_photons Pars:
+            {photons_path}/{self._idx_tag}_photons, self.sp, redshift= {self.redshift}, area= {self._area}, photon_exp_time= {(float(self._photon_exp_time[0]), self._photon_exp_time[1])}, {self._source_model}, point_sources= False, center = {self.sp.center}''')  
+            
             self._log_make_photons()
             self._write_log("obs",f"{n_photons}_Photons Generated")
             if n_photons == 0:
@@ -457,6 +461,11 @@ class Observation:
             '''Generate an event file of projected photons'''
             self._log_project_photons()
             n_events = pyxsim.project_photons(f"{photons_path}/{self._idx_tag}_photons", f"{photons_path}/{self._idx_tag}_events", sky_center = (30.0, 45.0), absorb_model=self._absorb_model, nH=self._nH_val, normal = self._orient_vec, north_vector = self._north_vector)
+            self._logger.info(f'''Project_photons Pars:
+            {photons_path}/{self._idx_tag}_photons, {photons_path}/{self._idx_tag}_events, sky_center = (30.0, 45.0), absorb_model={self._absorb_model}, nH={self._nH_val}, normal = {self._orient_vec}, north_vector = {self._north_vector}''')            
+            
+            
+            
             self._write_log("obs",f"{n_events}_Photons Projected.")
             if n_events == 0:
                 self._logger.warning("No projected events detected within pyXSIM!")
@@ -566,6 +575,8 @@ class Observation:
                 self._logger.info(f"Observering with {instrument_name} with exp time of {obs_exp_time}")
                 soxs.instrument_simulator(f"{self._idx_tag}_halo_simput.fits", f"{evts_path}/{idx_instr_tag}_evt.fits", obs_exp_time,
                                           instrument_name, [30., 45.], overwrite=True, instr_bkgnd = self._instr_bkgnd, foreground=self._foreground, ptsrc_bkgnd =self._ptsrc_bkgnd, aimpt_shift = aim_shift, no_dither = no_dither)
+                
+                
                 self._write_log("obs",f"Instrument Simulation Complete")
                 
                 self._logger.info(f'''instrument_simulator Pars:{self._idx_tag}_halo_simput.fits", {evts_path}/{idx_instr_tag}_evt.fits", {obs_exp_time}, {instrument_name}, [30., 45.], overwrite=True, instr_bkgnd = {self._instr_bkgnd}, foreground={self._foreground}, ptsrc_bkgnd ={self._ptsrc_bkgnd}, aimpt_shift = {aim_shift}, no_dither = {no_dither}''')
