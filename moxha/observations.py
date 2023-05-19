@@ -1072,6 +1072,13 @@ class Observation:
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_luminosity_phaseplot.png")
         except Exception as e:
             print(e)
+        try:
+            plot = yt.PhasePlot(self.sp, ('PartType0', "density"), ('PartType0', "temperature"), [('PartType0', 'StarFormationRate')], weight_field=None)
+            plot.set_colorbar_label((ptype, lumin_field), lumin_field)
+            plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_sfr_phaseplot_UNFILTERED_GAS.png")
+        except Exception as e:
+            print(e)
+             
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, emis_field)], weight_field=None)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_emissivity_phaseplot.png")
@@ -1116,6 +1123,16 @@ class Observation:
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_metallicity_phaseplot.png")
         except Exception as e:
             print(e)
+                  
+        try:        
+            plot = yt.PhasePlot(self.sp, ('PartType0', "x"), ('PartType0', "y"), [('PartType0', 'StarFormationRate')], weight_field=None)
+            plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_sfr_phaseplot_UNFILTERED_GAS.png")
+        except Exception as e:
+            print(e)
+            
+            
+            
+        
 
 
 

@@ -2,12 +2,13 @@ from moxha.observations import Observation
 import unyt
 import caesar
 import numpy as np
+import sys
 
 
 
 snapnum = 151
 halo_idxs = [int(sys.argv[1]),]
-
+rank = 1
 
 if str(sys.argv[2]) == "highmass":
     redshift = 0.035
