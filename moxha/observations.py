@@ -694,7 +694,7 @@ class Observation:
                         for energy_dict in self._image_energies:
                             soxs.write_image(f"{evts_path}/{idx_instr_tag}_evt_foregrounds.fits", f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}_foregrounds.fits", emin=energy_dict['emin'], emax=energy_dict['emax'], overwrite=True,)
                             try:
-                                fig, ax = soxs.plot_image(f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}_foregrounds.fits", stretch= soxs_stretch, cmap=soxs_cmap , width = instrument['image_width'])
+                                fig, ax = soxs.plot_image(f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}_foregrounds.fits", stretch=soxs_stretch, cmap=soxs_cmap, width = instrument['image_width'], vmin = plot_vmin, vmax = plot_vmax)
                             except:
                                 continue
                             with astropy.io.fits.open(f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}_foregrounds.fits") as hdul:
