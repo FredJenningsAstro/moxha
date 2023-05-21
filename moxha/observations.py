@@ -605,7 +605,7 @@ class Observation:
                 
                         
                 soxs.write_image(f"{evts_path}/{idx_instr_tag}_evt.fits", f"{evts_path}/{idx_instr_tag}_img.fits",  emin=self.emin, emax=self.emax, overwrite=True)
-                fig, ax = soxs.plot_image(f"{evts_path}/{idx_instr_tag}_img.fits", stretch='log', cmap=soxs_cmap, width = instrument['image_width'], vmin = plot_vmin, vmax = plot_vmax)
+                fig, ax = soxs.plot_image(f"{evts_path}/{idx_instr_tag}_img.fits", stretch=soxs_stretch, cmap=soxs_cmap, width = instrument['image_width'], vmin = plot_vmin, vmax = plot_vmax)
                 with astropy.io.fits.open(f"{evts_path}/{idx_instr_tag}_img.fits") as hdul:
                     center = np.array([float(hdul[0].header['CRPIX1']),float(hdul[0].header['CRPIX2'])] )
                     if calibration_markers:ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
