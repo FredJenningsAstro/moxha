@@ -5008,7 +5008,7 @@ class HaloSample():
         xlabel = r"kT$_\mathtt{X}$ [keV]"
         if mass_key == None: mass_key =  "Xray_HSE_M500"
         if hubble_correction:
-            ylabel = r"E(z)$^{\mathtt{-7/3}}$L$_\mathtt{X}$" + f"$^\mathrm{{{Xray_total_lumin_emin_RF}-{Xray_total_lumin_emax_RF}}}$[erg/s]"
+            ylabel = r"E(z)$^{\mathtt{-1}}$L$_\mathtt{X}$" + f"$^\mathrm{{{Xray_total_lumin_emin_RF}-{Xray_total_lumin_emax_RF}}}$[erg/s]"
         if not hubble_correction:
             ylabel = r"$L_x$[erg/s]"
         if cscale == None:
