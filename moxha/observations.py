@@ -251,9 +251,9 @@ class Observation:
         
 
             
-    def calculate_simba_pressurization_density(self):
+    def calculate_mufasa_pressurization_density(self):
         '''
-        Calculate the pressurization density for SIMBA. Can be used in a dataset filter to remove artificially-pressurized gas e.g. galaxies.
+        Calculate the pressurization density for mufasa. Can be used in a dataset filter to remove artificially-pressurized gas e.g. galaxies.
         ------------------------------------------------
         Returns: Density unyt_array 
         '''        
@@ -262,8 +262,8 @@ class Observation:
         T0 = 1e4 * unyt.K
         m_gas_el = 1.82e7 * unyt.M_sun
         nth = (3/(4 * math.pi * mu * unyt.mp))*((5*unyt.kb * T0)/(unyt.G * mu * unyt.mp))**3 * (1/(Nngb * m_gas_el))**2
-        simba_rho_th = nth.to(unyt.cm**-3) * 0.6*unyt.mp
-        return simba_rho_th
+        mufasa_rho_th = nth.to(unyt.cm**-3) * 0.6*unyt.mp
+        return mufasa_rho_th
 
     
     def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = 1200, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False):
@@ -394,10 +394,11 @@ class Observation:
         # for emin_for_Lx_tot, emax_for_Lx_tot in self.energies_for_Lx_tot:
         #     yt.add_xray_emissivity_field(self.ds, emin_for_Lx_tot, emax_for_Lx_tot, table_type="apec", metallicity = (self.generator_field, "metallicity") , redshift=self.redshift, cosmology=self.ds.cosmology, data_dir="./CODE/instr_files/")
     
-        self._source_model.make_source_fields(self.ds, self.emin_for_EW_values, self.emax_for_EW_values)   
+        '''Need to use force_override=True here, because an emission field with the same name may have been made earlier in order to apply a particle filter to the filtered_gas field'''
+        self._source_model.make_source_fields(self.ds, self.emin_for_EW_values, self.emax_for_EW_values, force_override=True)   
         
         for emin_for_Lx_tot, emax_for_Lx_tot in self.energies_for_Lx_tot:
-            self._source_model.make_source_fields(self.ds, emin_for_Lx_tot, emax_for_Lx_tot)
+            self._source_model.make_source_fields(self.ds, emin_for_Lx_tot, emax_for_Lx_tot, force_override=True)
              
             
             
@@ -802,6 +803,11 @@ class Observation:
         def _filtered_gas(pfilter, data):
             pfilter = True
             for i, cut in enumerate(self.dataset_cuts):
+                if 'xray' in cut["field"][1]:
+                    print(f"Creating yT apec emission field {cut['field'][1]} to filter on X-ray quantities. Note that this is not the full pyXSIM-generated field.")
+                    emin = float(cut["field"][1].split("_")[-3])
+                    emax = float(cut["field"][1].split("_")[-2])
+                    yt.add_xray_emissivity_field(self.ds, emin, emax, table_type="apec", metallicity = ("gas", "metallicity") , redshift=self.redshift, cosmology=self.ds.cosmology, data_dir="./CODE/instr_files/")
                 if cut["="] != None:
                     pfilter &= data[cut["field"]] == cut["="]
                 else:
