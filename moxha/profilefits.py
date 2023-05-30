@@ -4099,10 +4099,11 @@ class HaloSample():
                 y_data_err = np.zeros_like(x_data)
             Ez_correction = 1
 
-        our_data_alpha = 0.7
+        our_data_alpha = 1
         
 
         plotted_labels = []
+        print(f"Will set cmap for {y_property_key} vs {x_property_key} by the mass bias of mass[{mass_key}]")
         for halo in halo_samples:
             
             
@@ -4154,75 +4155,7 @@ class HaloSample():
         if best_fit_bins != False:
             
             while True:
-                ### Convert errors to log space. These are already E(x) corrected
-                err_logx = np.array( [x_data_err[i]/(float(x_data[i])*np.log(10)) for i in range(len(x_data_err))])
-                err_logy = np.array( [y_data_err[i]/(float(y_data[i])*np.log(10)) for i in range(len(y_data_err))])
-                ### Take the average +/- error as the standard deviation
-                err_logx = np.array([np.sum(err)/2 for err in err_logx])
-                err_logy = np.array([np.sum(err)/2 for err in err_logy])    
-            
-                sort_idxs = np.argsort(mass_data)
-                temp_x_data = np.array(x_data[sort_idxs])
-                temp_y_data = np.array(y_data[sort_idxs])
-                temp_m_data = np.array(mass_data[sort_idxs])
-                temp_err_logx = np.array(err_logx[sort_idxs])
-                temp_err_logy = np.array(err_logy[sort_idxs])
-                
-                if np.all(temp_err_logx==0):
-                    temp_err_logx = np.ones_like(temp_err_logx)*0.1
-                if np.all(temp_err_logy==0):
-                    temp_err_logy = np.ones_like(temp_err_logy)*0.1
-                
-                x_range_bins = np.linspace(min(np.log10(temp_x_data)), max(np.log10(temp_x_data)), num = best_fit_bins+1)
-                x_range_bins[-1] = 1.001*x_range_bins[-1]  ### Need this else digitize won't handle maximum x-value correctly
-                inds = np.digitize(np.log10(temp_x_data), x_range_bins)
-                if max(inds) > best_fit_bins:
-                    print("Error with bin indices!")
-                    sys.exit()
-                if len(set(inds)) < best_fit_bins:
-                    print(set(inds))
-                    print("empty bins detected, so reducing number of bins")
-                    best_fit_bins -= 1
-                    continue
-                ### Compute standard deviation on the mean by the sum of reciprocals formula using the individual variances
-                err_logx = np.array([np.sqrt(1/(np.sum(np.power(temp_err_logx[inds == i],-2)))) for i in range(1,best_fit_bins+1)])
-                err_logy = np.array([np.sqrt(1/(np.sum(np.power(temp_err_logy[inds == i],-2)))) for i in range(1,best_fit_bins+1)])            
-
-                ### Weight the means
-                logx_data = np.array([np.sum(np.log10(temp_x_data[inds == i])/(temp_err_logx[inds == i]**2)) for i in range(1,best_fit_bins+1)])
-                logy_data = np.array([np.sum(np.log10(temp_y_data[inds == i])/(temp_err_logy[inds == i]**2)) for i in range(1,best_fit_bins+1)])
-                
-                ### Correct normalisation for the means 
-                logx_data *= err_logx**2
-                logy_data *= err_logy**2
-                
-                for i in range(1,best_fit_bins+1): 
-                    if logx_data[i-1] < np.min(np.log10(temp_x_data[inds == i])):
-                        print("Average is too small!")
-                        print(30*"-")
-                        print("Data", np.log10(temp_x_data[inds == i]))
-                        print("logx_data (mean)", logx_data[i-1])
-                        if i != best_fit_bins and len([inds == i]) > 1: sys.exit()
-                    if logx_data[i-1] > np.max(np.log10(temp_x_data[inds == i])):
-                        print("Average is too big!")
-                        print(30*"-")
-                        print("Data", np.log10(temp_x_data[inds == i]))
-                        print("logx_data (mean)", logx_data[i-1])
-                        if i != best_fit_bins and len([inds == i]) > 1: sys.exit()
-                for i in range(1,best_fit_bins+1): 
-                    if logy_data[i-1] < np.min(np.log10(temp_y_data[inds == i])):
-                        print("Average is too small!")
-                        print(30*"-")
-                        print("Data", np.log10(temp_y_data[inds == i]))
-                        print("logy_data (mean)", logy_data[i-1])
-                        if i != best_fit_bins and len([inds == i]) > 1: sys.exit()
-                    if logy_data[i-1] > np.max(np.log10(temp_y_data[inds == i])):
-                        print("Average is too big!")
-                        print(30*"-")
-                        print("Data", np.log10(temp_y_data[inds == i])) 
-                        print("logy_data (mean)", logy_data[i-1])
-                        if i != best_fit_bins and len([inds == i]) > 1: sys.exit()
-
+                logx_data, logy_data, err_logx, err_logy = self._return_binned_means( mass_key, best_fit_min_mass, best_fit_max_mass, mass_data, x_data, y_data, x_data_err, y_data_err, best_fit_bins)
                 ###These are standard errord IN LOG SPACE!!!            
                 plt.scatter(10**logx_data, 10**logy_data, color = "mediumvioletred", s = 1300, marker = "1", zorder = 20000)
                 plt.errorbar(10**logx_data, 10**logy_data, xerr = (10**logx_data) * np.log(10)* err_logx, yerr = (10**logy_data) * np.log(10)* err_logy, capsize = 5, fmt = 'None', color = "mediumvioletred", elinewidth = 0.6, zorder = 20000)
@@ -4295,9 +4228,8 @@ class HaloSample():
                 print("covm", covm)
                 print("bces_logx_data",bces_logx_data)
                 print("bces_logy_data",bces_logy_data)
-                
-        if plot_best_fit:
-            
+
+
             if best_fit_min_mass != None and best_fit_min_mass>0:
                 mass_tag = mass_key.split("_")[0]
                 if mass_key == "M500_truth": mass_tag = "SO"
@@ -4314,13 +4246,13 @@ class HaloSample():
                     grad_string = f"Best Fit m(Y|X) = {'%.2f' % a[0]} $\pm$ {'%.2f' % erra[0]} \n {'': <7} m(Ogl) = {'%.2f' % a[3]} $\pm$ {'%.2f' % erra[3]}"
                 if bcesMethod == 0: print("Best fit line will be Y|X")
                 if bcesMethod == 3: print("Best fit line will be Orthogonal")
-                plt.plot([10**min(bces_logx_data), 10**max(bces_logx_data)],  (10**b[bcesMethod]) * (np.array([10**min(bces_logx_data), 10**max(bces_logx_data)])**(a[bcesMethod])), **best_fit_kwargs, label =  grad_string  )  
-                plt.plot([10**(min(bces_logx_data)-5), 10**(max(bces_logx_data)+5)],  (10**b[bcesMethod]) * (np.array([10**(min(bces_logx_data)-5), 10**(max(bces_logx_data)+5)])**(a[bcesMethod])), **{i:best_fit_kwargs[i] for i in best_fit_kwargs if i != "ls"}, ls = "dashed"  )               
-            try:
-                plt.fill_between(10**xcb, 10**lcb, 10**ucb, alpha = 0.0, color = "teal")
-            except:
-                print("NO CONFIDENCE INTERVAL!")
-                pass
+            plt.plot([10**min(bces_logx_data), 10**max(bces_logx_data)],  (10**b[bcesMethod]) * (np.array([10**min(bces_logx_data), 10**max(bces_logx_data)])**(a[bcesMethod])), **best_fit_kwargs, label =  grad_string  )  
+            plt.plot([10**(min(bces_logx_data)-5), 10**(max(bces_logx_data)+5)],  (10**b[bcesMethod]) * (np.array([10**(min(bces_logx_data)-5), 10**(max(bces_logx_data)+5)])**(a[bcesMethod])), **{i:best_fit_kwargs[i] for i in best_fit_kwargs if i != "ls"}, ls = "dashed"  )               
+        try:
+            plt.fill_between(10**xcb, 10**lcb, 10**ucb, alpha = 0.0, color = "teal")
+        except:
+            print("NO CONFIDENCE INTERVAL!")
+            pass
             
             
 
@@ -4331,37 +4263,103 @@ class HaloSample():
                     if not dset_dict.get("actually_plot", True):
                         continue
                     print(f"Plotting from external_data/{dset_dict['filename']}.csv")
+                    
                     csv_reader = csv.reader(csv_file, delimiter=',')
+                    
+                    dset_redshift_data = []
                     dset_x_data = []
                     dset_y_data = []
+                    dset_x_err_plus_data = []
+                    dset_y_err_plus_data = []
+                    dset_x_err_minus_data = []
+                    dset_y_err_minus_data = []
                     for row in csv_reader:
                         if dset_dict.get("flip_x_and_y", False) == True:
+                            print("want to flip x and y... not yet supported, so returning")
+                            return
                             dset_y_data.append(float(row[0]))
                             dset_x_data.append(float(row[1]))                           
                         else:
-                            dset_x_data.append(float(row[0]))
-                            dset_y_data.append(float(row[1]))
-                if dset_dict.get("only_plot_ends", False):
-                    dset_x_data = [dset_x_data[0], dset_x_data[-1]]
-                    dset_y_data = [dset_y_data[0], dset_y_data[-1]]
-                sort_idxs = np.argsort(dset_x_data)
-                dset_x_data = np.array(dset_x_data)[sort_idxs]
-                dset_y_data = np.array(dset_y_data)[sort_idxs]
-                dset_m = ( np.log10(dset_y_data[-1])-np.log10(dset_y_data[0]) )/( np.log10(dset_x_data[-1])-np.log10(dset_x_data[0]) )
-                dset_b = np.log10(dset_y_data[0]) - dset_m*np.log10(dset_x_data[0])
-                if dset_dict.get('extend', False):
-                    dset_x_data[0] = 1e-5 * dset_x_data[0]
-                    dset_y_data[0] = 10**(dset_m*np.log10(dset_x_data[0]) + dset_b)
-                    dset_x_data[-1] = 1e5 * dset_x_data[-1]
-                    dset_y_data[-1] = 10**(dset_m*np.log10(dset_x_data[-1]) + dset_b)
-                if dset_dict.get("needs_hubble_correct", False):
-                    print(f"Dataset needs E(z) correction, so we will multiply the Y value by $(H{{{dset_dict['hubble_correct_z']}}}/H0)^{{{Ez_power}}}$")
-                    Ez_correction = (self.cosmo.H(z=dset_dict['hubble_correct_z'])/self.cosmo.H(z=0))**(Ez_power)
-                    dset_y_data = dset_y_data * Ez_correction
+                            try: 
+                                float(row[0])
+                            except:
+                                continue
+                            try: 
+                                float(row[1])
+                            except:
+                                continue
+                                
+                            try:   #### If we have full data inc z and errors
+                                dset_x_err_minus_data.append(abs(float(row[6])))
+                                dset_redshift_data.append(float(row[0]))
+                                dset_y_data.append(float(row[1]))
+                                dset_y_err_plus_data.append(abs(float(row[2])))
+                                dset_y_err_minus_data.append(abs(float(row[3])))
+                                dset_x_data.append(float(row[4]))
+                                dset_x_err_plus_data.append(abs(float(row[5])))
+                            except:   ### If data is just two rows of x and y. Note the x,y, order is reversed from above because of how webplotdigitizer puts them in the columns
+                                dset_x_err_minus_data.append(0)
+                                dset_y_data.append(float(row[1]))
+                                dset_y_err_plus_data.append(0)
+                                dset_y_err_minus_data.append(0)
+                                dset_x_data.append(float(row[0]))
+                                dset_x_err_plus_data.append(0)
+
+                            
+                # if dset_dict.get("only_plot_ends", False):
+                #     dset_x_data = [dset_x_data[0], dset_x_data[-1]]
+                #     dset_y_data = [dset_y_data[0], dset_y_data[-1]]
+                # sort_idxs = np.argsort(dset_x_data)
+                # dset_x_data = np.array(dset_x_data)[sort_idxs]
+                # dset_y_data = np.array(dset_y_data)[sort_idxs]
+                # dset_m = ( np.log10(dset_y_data[-1])-np.log10(dset_y_data[0]) )/( np.log10(dset_x_data[-1])-np.log10(dset_x_data[0]) )
+                # dset_b = np.log10(dset_y_data[0]) - dset_m*np.log10(dset_x_data[0])
+                # if dset_dict.get('extend', False):
+                #     dset_x_data[0] = 1e-5 * dset_x_data[0]
+                #     dset_y_data[0] = 10**(dset_m*np.log10(dset_x_data[0]) + dset_b)
+                #     dset_x_data[-1] = 1e5 * dset_x_data[-1]
+                #     dset_y_data[-1] = 10**(dset_m*np.log10(dset_x_data[-1]) + dset_b)
+                
+                dset_redshift_data = np.asarray(dset_redshift_data)
+                dset_x_data = np.asarray(dset_x_data)
+                dset_y_data = np.asarray(dset_y_data)
+                dset_x_err_plus_data = np.asarray(dset_x_err_plus_data)
+                dset_y_err_plus_data = np.asarray(dset_y_err_plus_data)
+                dset_x_err_minus_data = np.asarray(dset_x_err_minus_data)
+                dset_y_err_minus_data = np.asarray(dset_y_err_minus_data)               
+                
+                if len(dset_redshift_data) == len(dset_x_data):
+                    print(f"Dataset needs E(z) correction, so we will multiply the Y value by the appropriate factors calculated from the redshifts")
+                    print(f"Using sequence of provided redshifts from the sataset to calculate E(z) factors")
+                    Ez_correction = np.asarray([  (self.cosmo.H(z=z)/self.cosmo.H(z=0))**(Ez_power) for z in dset_redshift_data]) 
+                    print("E(z) correction factors", [ ' %.2f' % x for x in Ez_correction[np.argsort(dset_x_data)]])
+                    print("y_data   pre-correction", [ ' %.2f' % np.log10(x) for x in dset_y_data[np.argsort(dset_x_data)]])
+                    dset_y_data = np.asarray(dset_y_data * Ez_correction)
+                    print("y_data  post-correction", [ ' %.2f' % np.log10(x) for x in dset_y_data[np.argsort(dset_x_data)]])
+                               
+                elif dset_dict.get("needs_hubble_correct", False):
+                    print(f"Using const E(z) = {dset_dict.get('hubble_correct_z')}")
+                    Ez_correction = (self.cosmo.H(z=dset_dict.get('hubble_correct_z'))/self.cosmo.H(z=0))**(Ez_power)
+                    dset_y_data = np.asarray(dset_y_data * Ez_correction)
+                    
+                try: 
+                    print("z_data", [' %.3f' % x for x in dset_redshift_data[np.argsort(dset_x_data)]])
+                except:
+                    pass
+                print("x_data", [ ' %.2f' % np.log10(x) for x in dset_x_data[np.argsort(dset_x_data)]])
+                print("y_data", [ ' %.2f' % np.log10(x) for x in dset_y_data[np.argsort(dset_x_data)]])
+                    
                 if dset_dict["plot type"] == "plot":
                     plt.plot(dset_dict.get("x_adjust", 1)*dset_x_data, dset_dict.get("y_adjust", 1)*dset_y_data, label = dset_dict["label"], **dset_dict["plot_kwds"] )
                 if dset_dict["plot type"] == "scatter":
+                    # print(np.vstack((  (np.asarray(dset_x_err_minus_data), np.asarray(dset_x_err_plus_data)))))
+                    
+                    plt.errorbar(dset_dict.get("x_adjust", 1)*dset_x_data, dset_dict.get("y_adjust", 1)*dset_y_data, xerr = np.vstack((  (np.asarray(dset_x_err_minus_data), np.asarray(dset_x_err_plus_data)))), yerr = np.vstack(((np.asarray(dset_y_err_minus_data), np.asarray(dset_y_err_plus_data)))), ls='none',alpha= dset_dict["plot_kwds"].get("alpha",1), color = dset_dict["plot_kwds"].get("color","gray"))
                     plt.scatter(dset_dict.get("x_adjust", 1)*dset_x_data, dset_dict.get("y_adjust", 1)*dset_y_data, label = dset_dict["label"], **dset_dict["plot_kwds"] )
+
+
+
+
 
           
         handles, labels = plt.gca().get_legend_handles_labels()
@@ -4383,9 +4381,10 @@ class HaloSample():
             sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
             sm.set_array([])
             cbar = fig1.colorbar(sm, cax = cbar_ax)
-            cbar.set_label('mass bias', rotation=90, fontsize = 35)
+            cbar.set_label(f'mass bias', rotation=90, fontsize = 35)
         plt.text(0.65, 0.05, f"m$_\mathrm{{ss}}=$ {'%.2f' % self_sim_scaling_power}", fontsize = 1.3*legend_fontsize, transform = ax.transAxes )
         os.makedirs(f"{self.save_dir}/scaling_relations/", exist_ok=True)
+        print(f"Saving at {self.save_dir}/scaling_relations/{save_name}.png")
         plt.savefig(f"{self.save_dir}/scaling_relations/{save_name}.png", bbox_inches='tight')
         plt.clf()
         plt.close() 
@@ -5023,6 +5022,75 @@ class HaloSample():
                 save_name = f"L_Xray_vs_weighted_kT_Xray_vs_{cscale}"   
         self.plot_loglog_scaling(x_property_key, y_property_key, xerr_key, yerr_key, mass_key, xlabel, ylabel, Ez_power, self_sim_scaling_power, xmin_plt_lim , xmax_plt_lim, ymin_plt_lim, ymax_plt_lim, save_name, cscale = cscale, cscale_scale = cscale_scale, data_labels = data_labels,  plot_self_similar_best_fit = plot_self_similar_best_fit, plot_best_fit=plot_best_fit, external_dsets = external_dsets, hubble_correction = hubble_correction, best_fit_kwargs=best_fit_kwargs, self_similar_best_fit_kwargs=self_similar_best_fit_kwargs, best_fit_min_mass = best_fit_min_mass,   legend_fontsize = legend_fontsize )
         
+        
+    
+    def plot_true_Lx_vs_weighted_kT_MW_scaling(self,emin,emax, cscale = None, mass_key=None,  cscale_scale = "log", xmin_plt_lim = 3e12, xmax_plt_lim = 1e15, ymin_plt_lim = 100, ymax_plt_lim = 600,   plot_self_similar_best_fit=False, plot_best_fit=True, data_labels = True,  external_dsets = [], hubble_correction = True, best_fit_kwargs={"color":"grey", "lw":3, "ls":"dashed","label":"best fit"}, self_similar_best_fit_kwargs={"color":"blue", "lw":3, "ls":"dashed", "label":"Self-Similar best fit"}, best_fit_min_mass = 0,    legend_fontsize = 20  ):
+        Ez_power = -1
+        self_sim_scaling_power = 2
+        Xray_total_lumin_emin_RF = 0.5
+        Xray_total_lumin_emax_RF = 2
+            
+        
+        x_property_key = "weighted_kT_MW"
+        xerr_key = "weighted_kT_MW_spread"
+        y_property_key = f"Lx_in_R500_truth_{Xray_total_lumin_emin_RF}_{Xray_total_lumin_emax_RF}_keV"
+        yerr_key = None
+        
+        xlabel = r"kT$_\mathtt{MW}$ [keV]"
+        if mass_key == None: mass_key =  "MW_HSE_M500"
+        if hubble_correction:
+            ylabel = r"E(z)$^{\mathtt{-1}}$L" + f"$^\mathrm{{{Xray_total_lumin_emin_RF}-{Xray_total_lumin_emax_RF}}}$[erg/s]"
+        if not hubble_correction:
+            ylabel = r"$L$[erg/s]"
+        if cscale == None:
+            if hubble_correction:
+                save_name = f"L_truth_vs_weighted_kT_MW_Ez_corrected"
+            else:
+                save_name = f"L_truth_vs_weighted_kT_MW"
+        else:
+            if hubble_correction:
+                save_name = f"L_truth_vs_weighted_kT_MW_Ez_corrected_vs_{cscale}"
+            else:
+                save_name = f"L_truth_vs_weighted_kT_MW_vs_{cscale}"   
+        self.plot_loglog_scaling(x_property_key, y_property_key, xerr_key, yerr_key, mass_key, xlabel, ylabel, Ez_power, self_sim_scaling_power, xmin_plt_lim , xmax_plt_lim, ymin_plt_lim, ymax_plt_lim, save_name, cscale = cscale, cscale_scale = cscale_scale, data_labels = data_labels,  plot_self_similar_best_fit = plot_self_similar_best_fit, plot_best_fit=plot_best_fit, external_dsets = external_dsets, hubble_correction = hubble_correction, best_fit_kwargs=best_fit_kwargs, self_similar_best_fit_kwargs=self_similar_best_fit_kwargs, best_fit_min_mass = best_fit_min_mass,   legend_fontsize = legend_fontsize )
+                
+        
+    def plot_true_Lx_vs_weighted_kT_LW_scaling(self,emin,emax, cscale = None, mass_key=None,  cscale_scale = "log", xmin_plt_lim = 3e12, xmax_plt_lim = 1e15, ymin_plt_lim = 100, ymax_plt_lim = 600,   plot_self_similar_best_fit=False, plot_best_fit=True, data_labels = True,  external_dsets = [], hubble_correction = True, best_fit_kwargs={"color":"grey", "lw":3, "ls":"dashed","label":"best fit"}, self_similar_best_fit_kwargs={"color":"blue", "lw":3, "ls":"dashed", "label":"Self-Similar best fit"}, best_fit_min_mass = 0,    legend_fontsize = 20  ):
+        Ez_power = -1
+        self_sim_scaling_power = 2
+        Xray_total_lumin_emin_RF = 0.5
+        Xray_total_lumin_emax_RF = 2
+            
+        
+        x_property_key = "weighted_kT_LW"
+        xerr_key = "weighted_kT_LW_spread"
+        y_property_key = f"Lx_in_R500_truth_{Xray_total_lumin_emin_RF}_{Xray_total_lumin_emax_RF}_keV"
+        yerr_key = None
+        
+        xlabel = r"kT$_\mathtt{LW}$ [keV]"
+        if mass_key == None: mass_key =  "LW_HSE_M500"
+        if hubble_correction:
+            ylabel = r"E(z)$^{\mathtt{-1}}$L" + f"$^\mathrm{{{Xray_total_lumin_emin_RF}-{Xray_total_lumin_emax_RF}}}$[erg/s]"
+        if not hubble_correction:
+            ylabel = r"$L$[erg/s]"
+        if cscale == None:
+            if hubble_correction:
+                save_name = f"L_truth_vs_weighted_kT_LW_Ez_corrected"
+            else:
+                save_name = f"L_truth_vs_weighted_kT_LW"
+        else:
+            if hubble_correction:
+                save_name = f"L_truth_vs_weighted_kT_LW_Ez_corrected_vs_{cscale}"
+            else:
+                save_name = f"L_truth_vs_weighted_kT_LW_vs_{cscale}"   
+        self.plot_loglog_scaling(x_property_key, y_property_key, xerr_key, yerr_key, mass_key, xlabel, ylabel, Ez_power, self_sim_scaling_power, xmin_plt_lim , xmax_plt_lim, ymin_plt_lim, ymax_plt_lim, save_name, cscale = cscale, cscale_scale = cscale_scale, data_labels = data_labels,  plot_self_similar_best_fit = plot_self_similar_best_fit, plot_best_fit=plot_best_fit, external_dsets = external_dsets, hubble_correction = hubble_correction, best_fit_kwargs=best_fit_kwargs, self_similar_best_fit_kwargs=self_similar_best_fit_kwargs, best_fit_min_mass = best_fit_min_mass,   legend_fontsize = legend_fontsize )
+                
+                
+        
+        
+        
+        
+        
     def plot_Xray_Lx_vs_kTR500_Xray_scaling(self,emin,emax, cscale = None, mass_key=None,  cscale_scale = "log", xmin_plt_lim = 3e12, xmax_plt_lim = 1e15, ymin_plt_lim = 100, ymax_plt_lim = 600,   plot_self_similar_best_fit=False, plot_best_fit=True, data_labels = True,  external_dsets = [], hubble_correction = True, best_fit_kwargs={"color":"grey", "lw":3, "ls":"dashed","label":"best fit"}, self_similar_best_fit_kwargs={"color":"blue", "lw":3, "ls":"dashed", "label":"Self-Similar best fit"}, best_fit_min_mass = 0,    legend_fontsize = 20  ):
         Ez_power = -1
         self_sim_scaling_power = 2
@@ -5031,7 +5099,7 @@ class HaloSample():
         xerr_key = "kT_Xray_at_Xray_HSE_R500_spread"
         yerr_key = f"Xray_L_in_Xray_HSE_R500_spread_{emin}-{emax}_RF_keV"
         xlabel = r"kT$_\mathtt{X}(R_{500,X})$ [keV]"
-        mass_key = "Xray_HSE_M500"
+        if mass_key == None:mass_key = "Xray_HSE_M500"
         if hubble_correction:
             ylabel = r"E(z)$^{\mathtt{-1}}$L$_\mathtt{X}$[erg/s]"
         if not hubble_correction:
@@ -5058,7 +5126,7 @@ class HaloSample():
         xerr_key = "Xray_HSE_M500_uncertainty"
         yerr_key = "Xray_Y_spread"
         xlabel = r"$\mathtt{M}_\mathtt{500,X}$  [$\mathtt{M}_\odot$ ]"
-        mass_key = "Xray_HSE_M500"
+        if mass_key == None:mass_key = "Xray_HSE_M500"
         if hubble_correction:
             ylabel = r"E(z)$^{\mathtt{-2/3}}$Y$_\mathtt{X}$[keV M$_\odot$/cm$^2$]"
         if not hubble_correction:
@@ -5085,7 +5153,7 @@ class HaloSample():
         xerr_key = "EW_HSE_M500_uncertainty"
         yerr_key = "EW_Y_spread"
         xlabel = r"$\mathtt{M}_\mathtt{500,EW}$  [$\mathtt{M}_\odot$ ]"
-        mass_key = "EW_HSE_M500"
+        if mass_key == None:mass_key = "EW_HSE_M500"
         if hubble_correction:
             ylabel = r"E(z)$^{\mathtt{-2/3}}$Y$_\mathtt{EW}$[keV M$_\odot$/cm$^2$]"
         if not hubble_correction:
@@ -5112,7 +5180,7 @@ class HaloSample():
         xerr_key = "MW_HSE_M500_uncertainty"
         yerr_key = "MW_Y_spread"
         xlabel = r"$\mathtt{M}_\mathtt{500,MW}$  [$\mathtt{M}_\odot$ ]"
-        mass_key = "MW_HSE_M500"
+        if mass_key == None:mass_key = "MW_HSE_M500"
         if hubble_correction:
             ylabel = r"E(z)$^{\mathtt{-2/3}}$Y$_\mathtt{MW}$[keV M$_\odot$/cm$^2$]"
         if not hubble_correction:
@@ -5139,7 +5207,7 @@ class HaloSample():
         xerr_key = "LW_HSE_M500_uncertainty"
         yerr_key = "LW_Y_spread"
         xlabel = r"$\mathtt{M}_\mathtt{500,LW}$  [$\mathtt{M}_\odot$ ]"
-        mass_key = "LW_HSE_M500"
+        if mass_key == None:mass_key = "LW_HSE_M500"
         if hubble_correction:
             ylabel = r"E(z)$^{\mathtt{-2/3}}$Y$_\mathtt{LW}$[keV M$_\odot$/cm$^2$]"
         if not hubble_correction:
@@ -5158,6 +5226,8 @@ class HaloSample():
         self.plot_loglog_scaling(x_property_key, y_property_key, xerr_key, yerr_key, mass_key, xlabel, ylabel, Ez_power, self_sim_scaling_power, xmin_plt_lim , xmax_plt_lim, ymin_plt_lim, ymax_plt_lim, save_name, cscale = cscale, cscale_scale = cscale_scale, data_labels = data_labels,  plot_self_similar_best_fit = plot_self_similar_best_fit, plot_best_fit=plot_best_fit, external_dsets = external_dsets, hubble_correction = hubble_correction, best_fit_kwargs=best_fit_kwargs, self_similar_best_fit_kwargs=self_similar_best_fit_kwargs, best_fit_min_mass = best_fit_min_mass,    legend_fontsize = legend_fontsize )
         
         
+     
+
      
 
     def add_stacked_profiles(self, filter_field = None, filter_field_min = -np.inf, filter_field_max = np.inf, R500_min_frac = 0.1, R500_max_frac = 1, chip_rad_arcmin = None, plot_individuals = False, plot_medians = True, plot_percentiles = True, percentiles = (16,84), color = None, median_color = "black", label = None, percentiles_kwds = {}, R500_type = "Xray", fit_s_powerlaw = False, s_powerlaw_offset = 0, s_powerlaw_kwds = {}):
