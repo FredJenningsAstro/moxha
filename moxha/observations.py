@@ -823,6 +823,8 @@ class Observation:
                 emin = float(cut["field"][1].split("_")[-3])
                 emax = float(cut["field"][1].split("_")[-2])
                 
+                self.dataset_cuts[i]["field"] = list(self.dataset_cuts[i]["field"])
+                
                 if self.emin_for_EW_values == emin:
                     self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emin), str(1.01*emin))
                     emin *= 1.01
@@ -841,6 +843,8 @@ class Observation:
                         emax *= 0.99   
                 if  self.dataset_cuts[i]["field"][1] != cut["field"][1]:
                     self._logger.info(f"Slightly perturbed the filter emission field from {cut['field'][1]} to {self.dataset_cuts[i]['field'][1]} in order to not use the yT-generated field instead of the pyXSIM generated field later on")
+                self.dataset_cuts[i]["field"] = tuple(self.dataset_cuts[i]["field"])
+
 
         for i, cut in enumerate(self.dataset_cuts):
             print("cut field[1]", cut["field"][1])
