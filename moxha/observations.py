@@ -826,22 +826,23 @@ class Observation:
                 self.dataset_cuts[i]["field"] = list(self.dataset_cuts[i]["field"])
                 
                 if self.emin_for_EW_values == emin:
-                    self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emin), str(1.01*emin))
-                    emin *= 1.01
+                    self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emin), str(1.001*emin))
+                    emin *= 1.001
                         
                 if self.emax_for_EW_values == emax:      
-                    self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emax), str(0.99*emax))
-                    emax *= 0.99              
+                    self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emax), str(0.999*emax))
+                    emax *= 0.999              
                     
                     
                 for emin_for_Lx_tot, emax_for_Lx_tot in self.energies_for_Lx_tot:
                     if emin_for_Lx_tot == emin:
-                        self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emin), str(1.01*emin))
-                        emin *= 1.01
+                        self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emin), str(1.001*emin))
+                        emin *= 1.001
                     if emax_for_Lx_tot == emax:
-                        self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emax), str(0.99*emax))
-                        emax *= 0.99   
+                        self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emax), str(0.999*emax))
+                        emax *= 0.999   
                 if  self.dataset_cuts[i]["field"][1] != cut["field"][1]:
+                    print(f"Slightly perturbed the filter emission field from {cut['field'][1]} to {self.dataset_cuts[i]['field'][1]} in order to not use the yT-generated field instead of the pyXSIM generated field later on")
                     self._logger.info(f"Slightly perturbed the filter emission field from {cut['field'][1]} to {self.dataset_cuts[i]['field'][1]} in order to not use the yT-generated field instead of the pyXSIM generated field later on")
                 self.dataset_cuts[i]["field"] = tuple(self.dataset_cuts[i]["field"])
 
