@@ -396,11 +396,11 @@ class Observation:
     
         '''Need to use force_override=True here, because an emission field with the same name may have been made earlier in order to apply a particle filter to the filtered_gas field'''
        
-        self._logger.info("\n Making pyXSIM Source Fields")
+        self._logger.info("Making pyXSIM Source Fields")
         self._source_model.make_source_fields(self.ds, self.emin_for_EW_values, self.emax_for_EW_values, force_override=True)    
         for emin_for_Lx_tot, emax_for_Lx_tot in self.energies_for_Lx_tot:
             self._source_model.make_source_fields(self.ds, emin_for_Lx_tot, emax_for_Lx_tot, force_override=True)
-        self._logger.info("\n Finished making pyXSIM Source Fields")
+        self._logger.info("Finished making pyXSIM Source Fields")
              
             
             
@@ -454,7 +454,7 @@ class Observation:
             # emis_field = str(f"xray_photon_emissivity_{self.emin}_{self.emax}_keV")
             # slc = yt.SlicePlot(self.ds,normal = "z", fields = [("filtered_gas",emis_field)], width = self.sp.radius, center = self.sp.center)
             # slc.show()            
-            self._logger.info(f"\n Generating photons with exp time of {(float(self._photon_exp_time[0]), self._photon_exp_time[1])}, collecting area = {self._area}, redshift = {self.redshift}")
+            self._logger.info(f"Generating photons with exp time of {(float(self._photon_exp_time[0]), self._photon_exp_time[1])}, collecting area = {self._area}, redshift = {self.redshift}")
             n_photons, n_cells = pyxsim.make_photons(f"{photons_path}/{self._idx_tag}_photons", self.sp, self.redshift, self._area, (float(self._photon_exp_time[0]), self._photon_exp_time[1]), self._source_model, point_sources= False, center = self.sp.center, )
             
             self._logger.info(f'''Make_photons Pars:
@@ -579,7 +579,7 @@ class Observation:
                 self._write_log("obs",f"no_dither = {no_dither}")
                 self._write_log("obs",f"-------------------------------")                          
 
-                self._logger.info(f" \n Observering with {instrument_name} with exp time of {obs_exp_time}")
+                self._logger.info(f"Observering with {instrument_name} with exp time of {obs_exp_time}")
                 soxs.instrument_simulator(f"{self._idx_tag}_halo_simput.fits", f"{evts_path}/{idx_instr_tag}_evt.fits", obs_exp_time,
                                           instrument_name, [30., 45.], overwrite=True, instr_bkgnd = self._instr_bkgnd, foreground=self._foreground, ptsrc_bkgnd =self._ptsrc_bkgnd, aimpt_shift = aim_shift, no_dither = no_dither)
                 
@@ -803,7 +803,7 @@ class Observation:
     def _cut_dataset(self):  
         ''' Finer control over cuts can of cource be obtained by just adding cuts onto the Observation.ds object before observing if desired'''
         
-        self._logger.info("\n \n Now applying user-defined cuts to the dataset")
+        self._logger.info("Now applying user-defined cuts to the dataset")
         def _filtered_gas(pfilter, data):
             pfilter = True
             for i, cut in enumerate(self.dataset_cuts):
@@ -818,13 +818,39 @@ class Observation:
             return pfilter
         
         
+        for i, cut in enumerate(np.copy(self.dataset_cuts)):
+            if 'xray' in cut["field"][1]:
+                emin = float(cut["field"][1].split("_")[-3])
+                emax = float(cut["field"][1].split("_")[-2])
+                
+                if self.emin_for_EW_values == emin:
+                    self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emin), str(1.01*emin))
+                    emin *= 1.01
+                        
+                if self.emax_for_EW_values == emax:      
+                    self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emax), str(0.99*emax))
+                    emax *= 0.99              
+                    
+                    
+                for emin_for_Lx_tot, emax_for_Lx_tot in self.energies_for_Lx_tot:
+                    if emin_for_Lx_tot == emin:
+                        self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emin), str(1.01*emin))
+                        emin *= 1.01
+                    if emax_for_Lx_tot == emax:
+                        self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emax), str(0.99*emax))
+                        emax *= 0.99   
+                if  self.dataset_cuts[i]["field"][1] != cut["field"][1]:
+                    self._logger.info(f"Slightly perturbed the filter emission field from {cut['field'][1]} to {self.dataset_cuts[i]['field'][1]} in order to not use the yT-generated field instead of the pyXSIM generated field later on")
+
         for i, cut in enumerate(self.dataset_cuts):
             print("cut field[1]", cut["field"][1])
-            if 'xray' in cut["field"][1]:
-                
+            if 'xray' in cut["field"][1]:                
                 print(f"Creating yT apec emission field {cut['field'][1]} to filter on X-ray quantities. Note that this is not the full pyXSIM-generated field.")
                 emin = float(cut["field"][1].split("_")[-3])
                 emax = float(cut["field"][1].split("_")[-2])
+
+
+
                 yt.add_xray_emissivity_field(self.ds, emin, emax, table_type="apec", metallicity = ("gas", "metallicity") , redshift=self.redshift, cosmology=self.ds.cosmology,)# data_dir="./CODE/instr_files/")
         required_fields = [x["field"][1] for x in self.dataset_cuts if  x["field"][0] == self.generator_field ]
         yt.add_particle_filter("filtered_gas", function=_filtered_gas, filtered_type=self.generator_field, requires=required_fields)
@@ -832,7 +858,7 @@ class Observation:
             self._logger.error("No required fields specified in the particle filter!")
             sys.exit()
         self.ds.add_particle_filter("filtered_gas")     
-        self._logger.info("Finished Filtering on Dataset \n \n")
+        self._logger.info("Finished Filtering on Dataset")
                            
      
         
