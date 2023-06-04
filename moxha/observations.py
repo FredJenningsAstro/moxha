@@ -800,6 +800,8 @@ class Observation:
                   
     def _cut_dataset(self):  
         ''' Finer control over cuts can of cource be obtained by just adding cuts onto the Observation.ds object before observing if desired'''
+        
+        print("Now applying user-defined cuts to the dataset")
         def _filtered_gas(pfilter, data):
             pfilter = True
             for i, cut in enumerate(self.dataset_cuts):
