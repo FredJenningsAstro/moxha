@@ -803,12 +803,6 @@ class Observation:
         def _filtered_gas(pfilter, data):
             pfilter = True
             for i, cut in enumerate(self.dataset_cuts):
-                print("cut field[1]", cut["field"][1])
-                if 'xray' in cut["field"][1]:
-                    print(f"Creating yT apec emission field {cut['field'][1]} to filter on X-ray quantities. Note that this is not the full pyXSIM-generated field.")
-                    emin = float(cut["field"][1].split("_")[-3])
-                    emax = float(cut["field"][1].split("_")[-2])
-                    yt.add_xray_emissivity_field(self.ds, emin, emax, table_type="apec", metallicity = ("gas", "metallicity") , redshift=self.redshift, cosmology=self.ds.cosmology, data_dir="./CODE/instr_files/")
                 if cut["="] != None:
                     pfilter &= data[cut["field"]] == cut["="]
                 else:
@@ -818,6 +812,15 @@ class Observation:
                         pfilter &= data[cut["field"]] < cut["<"]  
                               
             return pfilter
+        
+        
+        for i, cut in enumerate(self.dataset_cuts):
+            if 'xray' in cut["field"][1]:
+                print("cut field[1]", cut["field"][1])
+                print(f"Creating yT apec emission field {cut['field'][1]} to filter on X-ray quantities. Note that this is not the full pyXSIM-generated field.")
+                emin = float(cut["field"][1].split("_")[-3])
+                emax = float(cut["field"][1].split("_")[-2])
+                yt.add_xray_emissivity_field(self.ds, emin, emax, table_type="apec", metallicity = ("gas", "metallicity") , redshift=self.redshift, cosmology=self.ds.cosmology, data_dir="./CODE/instr_files/")
         required_fields = [x["field"][1] for x in self.dataset_cuts if  x["field"][0] == self.generator_field ]
         yt.add_particle_filter("filtered_gas", function=_filtered_gas, filtered_type=self.generator_field, requires=required_fields)
         if len(required_fields) == 0:
