@@ -815,8 +815,9 @@ class Observation:
         
         
         for i, cut in enumerate(self.dataset_cuts):
+            print("cut field[1]", cut["field"][1])
             if 'xray' in cut["field"][1]:
-                print("cut field[1]", cut["field"][1])
+                
                 print(f"Creating yT apec emission field {cut['field'][1]} to filter on X-ray quantities. Note that this is not the full pyXSIM-generated field.")
                 emin = float(cut["field"][1].split("_")[-3])
                 emax = float(cut["field"][1].split("_")[-2])
