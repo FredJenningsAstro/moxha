@@ -395,10 +395,12 @@ class Observation:
         #     yt.add_xray_emissivity_field(self.ds, emin_for_Lx_tot, emax_for_Lx_tot, table_type="apec", metallicity = (self.generator_field, "metallicity") , redshift=self.redshift, cosmology=self.ds.cosmology, data_dir="./CODE/instr_files/")
     
         '''Need to use force_override=True here, because an emission field with the same name may have been made earlier in order to apply a particle filter to the filtered_gas field'''
-        self._source_model.make_source_fields(self.ds, self.emin_for_EW_values, self.emax_for_EW_values, force_override=True)   
-        
+       
+        self._logger.info("\n Making pyXSIM Source Fields")
+        self._source_model.make_source_fields(self.ds, self.emin_for_EW_values, self.emax_for_EW_values, force_override=True)    
         for emin_for_Lx_tot, emax_for_Lx_tot in self.energies_for_Lx_tot:
             self._source_model.make_source_fields(self.ds, emin_for_Lx_tot, emax_for_Lx_tot, force_override=True)
+        self._logger.info("\n Finished making pyXSIM Source Fields")
              
             
             
@@ -452,7 +454,7 @@ class Observation:
             # emis_field = str(f"xray_photon_emissivity_{self.emin}_{self.emax}_keV")
             # slc = yt.SlicePlot(self.ds,normal = "z", fields = [("filtered_gas",emis_field)], width = self.sp.radius, center = self.sp.center)
             # slc.show()            
-            self._logger.info(f"Generating photons with exp time of {(float(self._photon_exp_time[0]), self._photon_exp_time[1])}, collecting area = {self._area}, redshift = {self.redshift}")
+            self._logger.info(f"\n Generating photons with exp time of {(float(self._photon_exp_time[0]), self._photon_exp_time[1])}, collecting area = {self._area}, redshift = {self.redshift}")
             n_photons, n_cells = pyxsim.make_photons(f"{photons_path}/{self._idx_tag}_photons", self.sp, self.redshift, self._area, (float(self._photon_exp_time[0]), self._photon_exp_time[1]), self._source_model, point_sources= False, center = self.sp.center, )
             
             self._logger.info(f'''Make_photons Pars:
@@ -577,7 +579,7 @@ class Observation:
                 self._write_log("obs",f"no_dither = {no_dither}")
                 self._write_log("obs",f"-------------------------------")                          
 
-                self._logger.info(f"Observering with {instrument_name} with exp time of {obs_exp_time}")
+                self._logger.info(f" \n Observering with {instrument_name} with exp time of {obs_exp_time}")
                 soxs.instrument_simulator(f"{self._idx_tag}_halo_simput.fits", f"{evts_path}/{idx_instr_tag}_evt.fits", obs_exp_time,
                                           instrument_name, [30., 45.], overwrite=True, instr_bkgnd = self._instr_bkgnd, foreground=self._foreground, ptsrc_bkgnd =self._ptsrc_bkgnd, aimpt_shift = aim_shift, no_dither = no_dither)
                 
@@ -801,7 +803,7 @@ class Observation:
     def _cut_dataset(self):  
         ''' Finer control over cuts can of cource be obtained by just adding cuts onto the Observation.ds object before observing if desired'''
         
-        print("Now applying user-defined cuts to the dataset")
+        self._logger.info("\n \n Now applying user-defined cuts to the dataset")
         def _filtered_gas(pfilter, data):
             pfilter = True
             for i, cut in enumerate(self.dataset_cuts):
@@ -830,7 +832,7 @@ class Observation:
             self._logger.error("No required fields specified in the particle filter!")
             sys.exit()
         self.ds.add_particle_filter("filtered_gas")     
-        self._logger.info("Finished Filtering on Dataset")
+        self._logger.info("Finished Filtering on Dataset \n \n")
                            
      
         
@@ -1122,6 +1124,13 @@ class Observation:
             plot.set_cmap((ptype, lumin_field), phase_cmap)
             plot.set_colorbar_label((ptype, lumin_field), lumin_field)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_metal_mass_vs_luminosity_phaseplot.png")
+        except Exception as e:
+            print(e)
+        try:        
+            plot = yt.PhasePlot(self.sp, (ptype, "density"),  [(ptype, lumin_field)], (ptype, "mass"), weight_field=None)
+            plot.set_cmap((ptype, "mass"), phase_cmap)
+            plot.set_ylabel((ptype, lumin_field), lumin_field)
+            plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_luminosity_vs_massphaseplot.png")
         except Exception as e:
             print(e)
         try:        
