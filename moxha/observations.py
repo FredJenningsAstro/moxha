@@ -827,24 +827,24 @@ class Observation:
                 self.dataset_cuts[i]["field"] = list(self.dataset_cuts[i]["field"])
                 energies_changed = 0
                 if self.emin_for_EW_values == emin:
-                    self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emin), str(1.001*emin))
-                    emin *= 1.001
+                    self.dataset_cuts[i]["field"][1] = self.dataset_cuts[i]["field"][1].replace(str(emin), str(0.001+emin))
+                    emin += 0.001
                     energies_changed = 1
                         
                 if self.emax_for_EW_values == emax:      
-                    self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emax), str(0.999*emax))
-                    emax *= 0.999
+                    self.dataset_cuts[i]["field"][1] = self.dataset_cuts[i]["field"][1].replace(str(emax), str(-0.001+emax))
+                    emax += -0.001
                     energies_changed = 1              
                     
                     
                 for emin_for_Lx_tot, emax_for_Lx_tot in self.energies_for_Lx_tot:
                     if emin_for_Lx_tot == emin:
-                        self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emin), str(1.001*emin))
-                        emin *= 1.001
+                        self.dataset_cuts[i]["field"][1] = self.dataset_cuts[i]["field"][1].replace(str(emin), str(0.001+emin))
+                        emin += 0.001
                         energies_changed = 1
                     if emax_for_Lx_tot == emax:
-                        self.dataset_cuts[i]["field"][1] = cut["field"][1].replace(str(emax), str(0.999*emax))
-                        emax *= 0.999
+                        self.dataset_cuts[i]["field"][1] = self.dataset_cuts[i]["field"][1].replace(str(emax), str(-0.001+emax))
+                        emax += -0.001
                         energies_changed = 1   
                 if  energies_changed:
                     print(f"Slightly perturbed the filter emission field from {orig_dset_cuts[i]['field'][1]} to {self.dataset_cuts[i]['field'][1]} in order to not use the yT-generated field instead of the pyXSIM generated field later on")
