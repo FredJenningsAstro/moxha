@@ -832,8 +832,8 @@ class Observation:
                     energies_changed = 1
                         
                 if self.emax_for_EW_values == emax:      
-                    self.dataset_cuts[i]["field"][1] = self.dataset_cuts[i]["field"][1].replace(str(emax), str(-0.001+emax))
-                    emax += -0.001
+                    self.dataset_cuts[i]["field"][1] = self.dataset_cuts[i]["field"][1].replace(str(emax), str(0.001+emax))
+                    emax += 0.001
                     energies_changed = 1              
                     
                     
@@ -843,8 +843,8 @@ class Observation:
                         emin += 0.001
                         energies_changed = 1
                     if emax_for_Lx_tot == emax:
-                        self.dataset_cuts[i]["field"][1] = self.dataset_cuts[i]["field"][1].replace(str(emax), str(-0.001+emax))
-                        emax += -0.001
+                        self.dataset_cuts[i]["field"][1] = self.dataset_cuts[i]["field"][1].replace(str(emax), str(0.001+emax))
+                        emax += 0.001
                         energies_changed = 1   
                 if  energies_changed:
                     print(f"Slightly perturbed the filter emission field from {orig_dset_cuts[i]['field'][1]} to {self.dataset_cuts[i]['field'][1]} in order to not use the yT-generated field instead of the pyXSIM generated field later on")
