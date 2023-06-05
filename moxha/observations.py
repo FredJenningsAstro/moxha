@@ -1115,90 +1115,90 @@ class Observation:
         ptype = "filtered_gas" # ["PartType0","PartType1","PartType4","PartType5"]
         lumin_field = str(f"xray_luminosity_{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV")
         emis_field = str(f"xray_emissivity_{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV")
-        phase_cmap = "viridis_r"  ### Currently can't use custom cmap for a phaseplot of a filtered field
+        phase_cmap = "viridis_r"  
         
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, "mass")], weight_field=None)
-            # plot.set_cmap((ptype, "mass"), phase_cmap)
+            plot.set_cmap((ptype, "mass"), phase_cmap)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_mass_phaseplot.png")
         except Exception as e:
             print(e)
         try:
             plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, lumin_field)], weight_field=None)
-            # plot.set_cmap((ptype, lumin_field), phase_cmap)
+            plot.set_cmap((ptype, lumin_field), phase_cmap)
             plot.set_colorbar_label((ptype, lumin_field), lumin_field)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_luminosity_phaseplot.png")
         except Exception as e:
             print(e)
         try:
             plot = yt.PhasePlot(self.sp, ('PartType0', "density"), ('PartType0', "temperature"), [('PartType0', 'StarFormationRate')], weight_field=None)
-            # plot.set_cmap(('PartType0', 'StarFormationRate'), phase_cmap)
+            plot.set_cmap(('PartType0', 'StarFormationRate'), phase_cmap)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_sfr_phaseplot_UNFILTERED_GAS.png")
         except Exception as e:
             print(e)
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, emis_field)], weight_field=None)
-            # plot.set_cmap((ptype,emis_field ), phase_cmap)
+            plot.set_cmap((ptype,emis_field ), phase_cmap)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_emissivity_phaseplot.png")
         except Exception as e:
             print(e)
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, emis_field), (ptype, lumin_field), [(ptype, "density")], weight_field=None)
-            # plot.set_cmap((ptype, "density"), phase_cmap)
+            plot.set_cmap((ptype, "density"), phase_cmap)
             plot.set_ylabel(lumin_field)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__emis_vs_luminosity_vs_density_phaseplot.png")
         except Exception as e:
             print(e)
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "metallicity"), [(ptype, lumin_field)], weight_field=None)
-            # plot.set_cmap((ptype, lumin_field), phase_cmap)
+            plot.set_cmap((ptype, lumin_field), phase_cmap)
             plot.set_colorbar_label((ptype, lumin_field), lumin_field)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_metallicity_vs_luminosity_phaseplot.png")
         except Exception as e:
             print(e)
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "metal_mass"), [(ptype, lumin_field)], weight_field=None)
-            # plot.set_cmap((ptype, lumin_field), phase_cmap)
+            plot.set_cmap((ptype, lumin_field), phase_cmap)
             plot.set_colorbar_label((ptype, lumin_field), lumin_field)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_metal_mass_vs_luminosity_phaseplot.png")
         except Exception as e:
             print(e)
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, "density"),  [(ptype, lumin_field)], (ptype, "mass"), weight_field=None)
-            # plot.set_cmap((ptype, "mass"), phase_cmap)
+            plot.set_cmap((ptype, "mass"), phase_cmap)
             plot.set_ylabel((ptype, lumin_field), lumin_field)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_luminosity_vs_massphaseplot.png")
         except Exception as e:
             print(e)
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, lumin_field)], weight_field=None)
-            # plot.set_cmap((ptype, lumin_field), phase_cmap)
+            plot.set_cmap((ptype, lumin_field), phase_cmap)
             plot.set_colorbar_label((ptype, lumin_field), lumin_field)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_luminosity_phaseplot.png")
         except Exception as e:
             print(e)
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, "density")], weight_field=None)
-            # plot.set_cmap((ptype, "density"), phase_cmap)
+            plot.set_cmap((ptype, "density"), phase_cmap)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_density_phaseplot.png")
         except Exception as e:
             print(e)
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, "temperature")], weight_field=None)
-            # plot.set_cmap((ptype, "temperature"), phase_cmap)
+            plot.set_cmap((ptype, "temperature"), phase_cmap)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_T_phaseplot.png")
         except Exception as e:
             print(e)
         try:        
             plot = yt.PhasePlot(self.sp, (ptype, "x"), (ptype, "y"), [(ptype, "metallicity")], weight_field=None)
-            # plot.set_cmap((ptype, "metallicity"), phase_cmap)
+            plot.set_cmap((ptype, "metallicity"), phase_cmap)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_metallicity_phaseplot.png")
         except Exception as e:
             print(e)
                   
         try:        
             plot = yt.PhasePlot(self.sp, ('PartType0', "x"), ('PartType0', "y"), [('PartType0', 'StarFormationRate')], weight_field=None)
-            # plot.set_cmap(('PartType0', 'StarFormationRate'), phase_cmap)
+            plot.set_cmap(('PartType0', 'StarFormationRate'), phase_cmap)
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_sfr_phaseplot_UNFILTERED_GAS.png")
         except Exception as e:
             print(e)
