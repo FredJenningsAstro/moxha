@@ -989,7 +989,7 @@ class Observation:
         lumin_field = str(f"xray_luminosity_{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV")
         emis_field = str(f"xray_emissivity_{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV")
         radius = (ptype,"radius")
-        
+        np.save(f"{yt_data_path}/{self._idx_tag}_filtered_gas_coords.npy",self.sp[ptype, "particle_position"], allow_pickle=True,)
         # for field in self.ds.derived_field_list:
         #     # if field[0] == ptype:
         #         print(field)
