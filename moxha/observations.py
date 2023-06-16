@@ -269,11 +269,12 @@ class Observation:
         self._logger.info("Pressure Field Calculated Assuming Gamma=5/3")
         
         if make_grad_fields:
+            self.ds.force_periodicity()
             self.ds.add_gradient_fields(("gas", "temperature"))
             self.ds.add_gradient_fields(("gas", "density"))
             self.ds.add_gradient_fields(("gas", "entropy"))            
             self.ds.add_gradient_fields(("gas", "pressure"))
-            self._logger.info("Gradient Fields added for Temperature, Density, Entropy, Pressure")
+            self._logger.info("Gradient Fields added for Temperature, Density, Entropy, Pressure, with enforced periodicity on the ds")
         
 
             
