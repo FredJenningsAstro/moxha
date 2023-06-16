@@ -228,7 +228,7 @@ class Observation:
 
 
 
-    def load_ds(self, **ds_load_kwargs):  
+    def load_ds(self, make_grad_fields=True, **ds_load_kwargs):  
         '''
         Load the dataset in through yT, using the box_name attribute of the Observation instance to specify the path to the box. Sets default_species_fields="ionized".
         ------------------------------------------------
@@ -249,6 +249,32 @@ class Observation:
             self._logger.warning(e)
         self._logger.info(f"Box at {self.box_path} successfully loaded.")
         
+        
+        
+        def _pressure(field, data):
+            gamma = 5/3
+            return (
+                (gamma - 1.0)
+                * data["gas", "density"]
+                * data["PartType0", "specific_thermal_energy"]
+            )
+            
+        self.ds.add_field(
+            name=("gas", "pressure"),
+            function=_pressure,
+            sampling_type="local",
+            units="dyne/cm**2",
+        )
+        
+        self._logger.info("Pressure Field Calculated Assuming Gamma=5/3")
+        
+        if make_grad_fields:
+            self.ds.add_gradient_fields(("gas", "temperature"))
+            self.ds.add_gradient_fields(("gas", "density"))
+            self.ds.add_gradient_fields(("gas", "entropy"))            
+            self.ds.add_gradient_fields(("gas", "pressure"))
+            self._logger.info("Gradient Fields added for Temperature, Density, Entropy, Pressure")
+        
 
             
     def calculate_mufasa_pressurization_density(self):
@@ -266,7 +292,7 @@ class Observation:
         return mufasa_rho_th
 
     
-    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = 1200, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, just_load_and_filter = False):
+    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = 1200, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, ):
         '''
         Function to use pyXSIM to generate photon lists for the active halos and then project the photons. We use pyXSIM's CIE Source Model. 
         ------------------------------------------------
