@@ -266,7 +266,7 @@ class Observation:
         return mufasa_rho_th
 
     
-    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = 1200, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False):
+    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = 1200, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, just_load_and_filter = False):
         '''
         Function to use pyXSIM to generate photon lists for the active halos and then project the photons. We use pyXSIM's CIE Source Model. 
         ------------------------------------------------
@@ -413,7 +413,7 @@ class Observation:
             self._idx_tag = f"{self._run_ID}_h{str(halo_idx).zfill(3)}"
             photons_path = Path(self._top_save_path/"PHOTONS"/self._idx_tag)
             
-            if os.path.exists(f"{photons_path}/{self._idx_tag}_photons.h5") and os.path.exists(f"{photons_path}/{self._idx_tag}_halo_phlist.fits") and not overwrite and not only_profiles:
+            if os.path.exists(f"{photons_path}/{self._idx_tag}_photons.h5") and os.path.exists(f"{photons_path}/{self._idx_tag}_halo_phlist.fits") and not overwrite and not only_profiles and not just_load_and_filter:
                 self._logger.info(f"{photons_path}/{self._idx_tag}_photons.h5 and {photons_path}/{self._idx_tag}_halo_phlist.fits already exist and overwrite == False, so we will skip making photons for this halo index.")
                 continue            
 
@@ -432,7 +432,9 @@ class Observation:
             if self.R200 != None:
                 self.sp_of_R200 = self.ds.sphere(halo_center, self.R200)
             
-            
+            if just_load_and_filter:
+                print("Returning obs.ds and am done for this halo since just_load_and_filter = True...")
+                continue
             if make_phaseplots:
                 self._yT_phaseplots()
 
@@ -1252,4 +1254,5 @@ class Observation:
         self._write_log("obs", f"Absorbtion Model = {self._absorb_model}")
         self._write_log("obs", f"nH               = {self._nH_val}")
         self._write_log("obs", f"Normal Vector    = {self._orient_vec}")
+        self._write_log("obs", f"North Vector    = {self._north_vector}")
         self._write_log("obs", f"-------------------------------")   
