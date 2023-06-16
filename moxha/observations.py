@@ -292,7 +292,7 @@ class Observation:
         return mufasa_rho_th
 
     
-    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = 1200, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, ):
+    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = 1200, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, just_load_and_filter = False ):
         '''
         Function to use pyXSIM to generate photon lists for the active halos and then project the photons. We use pyXSIM's CIE Source Model. 
         ------------------------------------------------
