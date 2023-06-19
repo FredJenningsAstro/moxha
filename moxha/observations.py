@@ -458,6 +458,7 @@ class Observation:
             self._write_log("obs",f" Using soxs version {soxs.__version__}")
             self._write_log("obs",f" Using yt version {yt.__version__}")
             self._write_log("obs",f" \n \n Halo {self._idx_tag} \n")
+            self._write_log("obs", f"M500 = {self.M500}")
             self._write_log("obs", f"R500 = {self.R500}")
             self._write_log("obs", f"Halo Center = {halo_center}")
             
