@@ -46,7 +46,7 @@ class Observation:
         
     '''
     
-    def __init__(self, box_path: str,snap_num: int, save_dir: str, run_ID: str, emin: float, emax: float, emin_for_EW_values:float, emax_for_EW_values:float, energies_for_Lx_tot:list, overwrite = False, redshift = "from_box", h = "from_box", test_align = False, enable_parallelism = False,):
+    def __init__(self, box_path: str,snap_num: int, save_dir: str, run_ID: str, emin: float, emax: float, emin_for_EW_values:float, emax_for_EW_values:float, energies_for_Lx_tot:list, overwrite = False, redshift = "from_box", h = "from_box", test_align = False, enable_parallelism = False, soxs_data_dir=None):
         
 
         self._logger = logging.getLogger("MOXHA")
@@ -70,8 +70,15 @@ class Observation:
         # if str(yt.__version__) != "4.1.1":
         #     print("yT version is not 4.1.1. Exiting...")
         #     sys.exit()
-        self._logger.info(f"setting soxs config loc to " + f"{str(imp.find_module('moxha')[1])}/instr_files/")
-        soxs.set_soxs_config("soxs_data_dir", f"{str(imp.find_module('moxha')[1])}/instr_files/")
+        if soxs_data_dir == None:
+            self._logger.info(f"setting soxs data loc to " + f"{str(imp.find_module('moxha')[1])}/instr_files/")
+            soxs.set_soxs_config("soxs_data_dir", f"{str(imp.find_module('moxha')[1])}/instr_files/")
+            self._soxs_data_dir = f"{str(imp.find_module('moxha')[1])}/instr_files/"
+        else:
+            self._soxs_data_dir = soxs_data_dir
+            self._logger.info(f"setting soxs data loc to " + soxs_data_dir)
+            soxs.set_soxs_config("soxs_data_dir", soxs_data_dir)
+            
         self._logger.info("Observation Initialised")
 
         assert(isinstance(run_ID,str) & len(run_ID)<10)   ## Long run_IDs can cause SOXS to fail silently when reading some filetypes   
@@ -554,7 +561,7 @@ class Observation:
         # if spectrum_plot_emin == None: spectrum_plot_emin = 0.8 * self.emin
         # if spectrum_plot_emax == None: spectrum_plot_emax = 1.05 * self.emax
         
-         
+        soxs.set_soxs_config("soxs_data_dir", self._soxs_data_dir)
         self._image_energies = image_energies
         self._instr_bkgnd = instr_bkgnd
         self._ptsrc_bkgnd = ptsrc_bkgnd
