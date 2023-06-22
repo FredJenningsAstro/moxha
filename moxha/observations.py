@@ -455,6 +455,7 @@ class Observation:
         for i,halo in enumerate(self.active_halos):
             halo_idx = halo["index"]
             self.R500 = halo["R500"]
+            self.M500 = halo.get("M500", None)
             self.R200 = halo.get("R200", None)
             halo_center = halo["center"]
             self._logger.info(f"Making photons for Halo {halo_idx}")
