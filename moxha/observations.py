@@ -104,6 +104,18 @@ class Observation:
         elif (energies_for_Lx_tot.ndim) == 2:
             self.energies_for_Lx_tot = np.array(energies_for_Lx_tot).astype(float)
 
+
+        chandra_acisi_cy0_nogap = soxs.get_instrument_from_registry("chandra_acisi_cy0")
+        chandra_acisi_cy0_nogap["name"] = "chandra_acisi_cy0_nogap" # Must change the name, otherwise an error will be thrown
+        chandra_acisi_cy0_nogap["aimpt_coords"] = [0.0, 0.0] # Results in an ambitiously smaller plate scale, 0.1 arcsec per pixel
+        chandra_acisi_cy0_nogap["chips"] = [['Box', 0, 0, 2048, 2048]]
+        soxs.add_instrument_to_registry(chandra_acisi_cy0_nogap)
+        
+        chandra_acisi_cy22_nogap = soxs.get_instrument_from_registry("chandra_acisi_cy22")
+        chandra_acisi_cy22_nogap["name"] = "chandra_acisi_cy22_nogap" # Must change the name, otherwise an error will be thrown
+        chandra_acisi_cy22_nogap["aimpt_coords"] = [0.0, 0.0] # Results in an ambitiously smaller plate scale, 0.1 arcsec per pixel
+        chandra_acisi_cy22_nogap["chips"] = [['Box', 0, 0, 2048, 2048]]
+        soxs.add_instrument_to_registry(chandra_acisi_cy22_nogap)
         
         athena_chip_ctr_arcsec = 632.37
         chip_width_arcsec = 1144.08213373        
@@ -119,7 +131,9 @@ class Observation:
                     {"Name":"lem_0.9eV", "aim_shift": [0.0, 0.0], "chip_width":64, 'image_width':1.08 },
                     {"Name":"lem_2eV", "aim_shift": [0.0, 0.0], "chip_width":64, 'image_width':1.08 },
                     {"Name":"chandra_acisi_cy0", "aim_shift": [218, -283], "chip_width":1050, 'image_width':0.25 },
-                    {"Name":"chandra_acisi_cy22", "aim_shift": [218, -283], "chip_width":1050, 'image_width':0.25 }
+                    {"Name":"chandra_acisi_cy22", "aim_shift": [218, -283], "chip_width":1050, 'image_width':0.25 },
+                    {"Name":"chandra_acisi_cy0_nogap", "aim_shift": [0, 0], "chip_width":2100, 'image_width':0.7 },
+                    {"Name":"chandra_acisi_cy22_nogap", "aim_shift": [0, 0], "chip_width":2100, 'image_width':0.7 },
                 ]   
         except:
             raise RuntimeError('Default instrument values could not be loaded. Make sure instrument name is one of: athena_wfi, lem_0.9eV, lem_2eV')        
