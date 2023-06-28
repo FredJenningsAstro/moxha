@@ -273,7 +273,7 @@ class Observation:
         
         
         def _pressure(field, data):
-            gamma = data.ds.gamma
+            gamma = 5/3
             return (
                 (gamma - 1.0)
                 * data["gas", "density"]
@@ -287,10 +287,10 @@ class Observation:
             units="dyne/cm**2",
         )
         
-        self._logger.info("Pressure Field Calculated")# Assuming Gamma=5/3")
+        
         
         def _sound_speed(field, data):
-            gamma = data.ds.gamma
+            gamma = 5/3
             tr = gamma * data["gas", "pressure"] / data["gas", "density"]
             return np.sqrt(tr)
         
@@ -312,7 +312,7 @@ class Observation:
             units="",
         )
         
-        
+        self._logger.info("Pressure, Sound Speed, and Mach Number fields Calculated Assuming Gamma=5/3")
         
         if make_grad_fields:
             self.ds.force_periodicity()
@@ -510,6 +510,7 @@ class Observation:
             if just_load_and_filter:
                 print("Returning obs.ds and am done for this halo since just_load_and_filter = True...")
                 continue
+            
             if make_phaseplots:
                 self._yT_phaseplots()
 
