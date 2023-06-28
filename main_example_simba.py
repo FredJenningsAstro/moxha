@@ -37,7 +37,7 @@ instrument_background   = False                                                 
 point_source_background = False                                                                             ### Include CXB sources (e.g. from binaries) in the observations
 milky_way_foreground    = False                                                                             ### Include Milky Way CGM emission in the observations
 
-
+soxs_data_dir = "../soxs_data_dir/"                                                                         ### Path to instrument_files included under instr_files
 
 
 ##########################################################################
