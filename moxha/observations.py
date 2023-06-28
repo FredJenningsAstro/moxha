@@ -1199,6 +1199,12 @@ class Observation:
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__density_vs_T_vs_mass_phaseplot.png")
         except Exception as e:
             print(e)
+        try:        
+            plot = yt.PhasePlot(self.sp, (ptype, "El_number_density"), (ptype, "temperature"), [(ptype, "mass")], weight_field=None)
+            plot.set_cmap((ptype, "mass"), phase_cmap)
+            plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__El_number_density_vs_T_vs_mass_phaseplot.png")
+        except Exception as e:
+            print(e)
         try:
             plot = yt.PhasePlot(self.sp, (ptype, "density"), (ptype, "temperature"), [(ptype, lumin_field)], weight_field=None)
             plot.set_cmap((ptype, lumin_field), phase_cmap)
@@ -1278,6 +1284,15 @@ class Observation:
             plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__x_vs_y_vs_sfr_phaseplot_UNFILTERED_GAS.png")
         except Exception as e:
             print(e)
+            
+        try:        
+            plot = yt.PhasePlot(self.sp, ("gas", "El_number_density"), ("gas", "temperature"), [("gas", "mass")], weight_field=None)
+            plot.set_cmap((ptype, "mass"), phase_cmap)
+            plot.save(str(yt_data_path) + f"/{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV__El_number_density_vs_T_vs_mass_phaseplot_UNFILTERED_GAS.png")
+        except Exception as e:
+            print(e)
+            
+
             
             
             
