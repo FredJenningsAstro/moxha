@@ -60,7 +60,7 @@ metals = ["He_metallicity", "C_metallicity", "N_metallicity", "O_metallicity",
           "Ne_metallicity", "Mg_metallicity", "Si_metallicity", "S_metallicity", 
           "Ca_metallicity", "Fe_metallicity"] 
 
-obs = Observation(SNAPFILE, snapnum, save_dir = save_dir, run_ID= run_ID, emin = 0.05, emax = 10, emin_for_EW_values=weighting_e[0], emax_for_EW_values=weighting_e[1], redshift = redshift, energies_for_Lx_tot = ebins)
+obs = Observation(SNAPFILE, snapnum, save_dir = save_dir, run_ID= run_ID, emin = 0.05, emax = 10, emin_for_EW_values=weighting_e[0], emax_for_EW_values=weighting_e[1], redshift = redshift, energies_for_Lx_tot = ebins, soxs_data_dir = soxs_data_dir)
 for instr in instruments_dict: obs.add_instrument(**instr )
 obs.load_ds()
 for cut in cuts_dict:obs.add_cut(**cut )
