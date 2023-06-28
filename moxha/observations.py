@@ -273,7 +273,7 @@ class Observation:
         
         
         def _pressure(field, data):
-            gamma = 5/3
+            gamma = data.ds.gamma
             return (
                 (gamma - 1.0)
                 * data["gas", "density"]
@@ -287,7 +287,32 @@ class Observation:
             units="dyne/cm**2",
         )
         
-        self._logger.info("Pressure Field Calculated Assuming Gamma=5/3")
+        self._logger.info("Pressure Field Calculated")# Assuming Gamma=5/3")
+        
+        def _sound_speed(field, data):
+            gamma = data.ds.gamma
+            tr = gamma * data["gas", "pressure"] / data["gas", "density"]
+            return np.sqrt(tr)
+        
+        self.ds.add_field(
+            name=("gas", "sound_speed"),
+            function=_sound_speed,
+            sampling_type="local",
+            units="cm/s",
+        )
+        
+        def _mach_number(field, data):
+            """M{|v|/c_sound}"""
+            return data["gas", "velocity_magnitude"] / data["gas", "sound_speed"]
+        
+        self.ds.add_field(
+            name=("gas", "mach_number"),
+            function=_mach_number,
+            sampling_type="local",
+            units="",
+        )
+        
+        
         
         if make_grad_fields:
             self.ds.force_periodicity()
