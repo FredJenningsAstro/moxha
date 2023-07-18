@@ -104,18 +104,19 @@ class Observation:
         elif (energies_for_Lx_tot.ndim) == 2:
             self.energies_for_Lx_tot = np.array(energies_for_Lx_tot).astype(float)
 
-
-        chandra_acisi_cy0_nogap = soxs.get_instrument_from_registry("chandra_acisi_cy0")
-        chandra_acisi_cy0_nogap["name"] = "chandra_acisi_cy0_nogap" # Must change the name, otherwise an error will be thrown
-        chandra_acisi_cy0_nogap["aimpt_coords"] = [0.0, 0.0] # Results in an ambitiously smaller plate scale, 0.1 arcsec per pixel
-        chandra_acisi_cy0_nogap["chips"] = [['Box', 0, 0, 2048, 2048]]
-        soxs.add_instrument_to_registry(chandra_acisi_cy0_nogap)
-        
-        chandra_acisi_cy22_nogap = soxs.get_instrument_from_registry("chandra_acisi_cy22")
-        chandra_acisi_cy22_nogap["name"] = "chandra_acisi_cy22_nogap" # Must change the name, otherwise an error will be thrown
-        chandra_acisi_cy22_nogap["aimpt_coords"] = [0.0, 0.0] # Results in an ambitiously smaller plate scale, 0.1 arcsec per pixel
-        chandra_acisi_cy22_nogap["chips"] = [['Box', 0, 0, 2048, 2048]]
-        soxs.add_instrument_to_registry(chandra_acisi_cy22_nogap)
+        if "chandra_acisi_cy0_nogap" not in list(instrument_registry.keys()):
+            chandra_acisi_cy0_nogap = soxs.get_instrument_from_registry("chandra_acisi_cy0")
+            chandra_acisi_cy0_nogap["name"] = "chandra_acisi_cy0_nogap" # Must change the name, otherwise an error will be thrown
+            chandra_acisi_cy0_nogap["aimpt_coords"] = [0.0, 0.0] # Results in an ambitiously smaller plate scale, 0.1 arcsec per pixel
+            chandra_acisi_cy0_nogap["chips"] = [['Box', 0, 0, 2048, 2048]]
+            soxs.add_instrument_to_registry(chandra_acisi_cy0_nogap)
+            
+        if "chandra_acisi_cy22_nogap" not in list(instrument_registry.keys()):        
+            chandra_acisi_cy22_nogap = soxs.get_instrument_from_registry("chandra_acisi_cy22")
+            chandra_acisi_cy22_nogap["name"] = "chandra_acisi_cy22_nogap" # Must change the name, otherwise an error will be thrown
+            chandra_acisi_cy22_nogap["aimpt_coords"] = [0.0, 0.0] # Results in an ambitiously smaller plate scale, 0.1 arcsec per pixel
+            chandra_acisi_cy22_nogap["chips"] = [['Box', 0, 0, 2048, 2048]]
+            soxs.add_instrument_to_registry(chandra_acisi_cy22_nogap)
         
         athena_chip_ctr_arcsec = 632.37
         chip_width_arcsec = 1144.08213373        
@@ -339,7 +340,7 @@ class Observation:
         return mufasa_rho_th
 
     
-    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = 1200, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, just_load_and_filter = False ):
+    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = None, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, just_load_and_filter = False ):
         '''
         Function to use pyXSIM to generate photon lists for the active halos and then project the photons. We use pyXSIM's CIE Source Model. 
         ------------------------------------------------
@@ -377,6 +378,11 @@ class Observation:
         max_Lx_tot_e = max([x[1] for x in self.energies_for_Lx_tot])
         self._photons_emin = min(photons_emin, self.emin, min_Lx_tot_e, self.emin_for_EW_values)
         self._photons_emax = max(photons_emax, self.emax, max_Lx_tot_e, self.emax_for_EW_values)
+        
+        if self._photons_emin < photons_emin or self._photons_emax > photons_emax:
+            self._logger.warning(f"Your desired energies for calculating Lx total or emission-weighted quantities are beyond the extrema of the specified photon energy range. The desired photon energy range has been updated to {self._photons_emin}-{self._photons_emax} keV in response.")
+        
+        
         self.generator_field = generator_field
         self._photon_exp_time = (photon_sample_exp,'ks')
         self._area = area
@@ -603,6 +609,10 @@ class Observation:
         # if spectrum_plot_emin == None: spectrum_plot_emin = 0.8 * self.emin
         # if spectrum_plot_emax == None: spectrum_plot_emax = 1.05 * self.emax
         
+        if image_energies == None:
+            self._write_warning("You haven't specified any energies for the X-ray maps. At present only the full spectrum will be written, and no maps")
+        
+        
         soxs.set_soxs_config("soxs_data_dir", self._soxs_data_dir)
         self._image_energies = image_energies
         self._instr_bkgnd = instr_bkgnd
@@ -683,31 +693,31 @@ class Observation:
                 plt.legend()  
                 plt.savefig(f"{evts_path}/{idx_instr_tag}_spectrum.png", dpi=400)    
                 
+               
+                # soxs.write_image(f"{evts_path}/{idx_instr_tag}_evt.fits", f"{evts_path}/{idx_instr_tag}_img.fits",  emin=self.emin, emax=self.emax, overwrite=True)
+                # fig, ax = soxs.plot_image(f"{evts_path}/{idx_instr_tag}_img.fits", stretch=soxs_stretch, cmap=soxs_cmap, width = instrument['image_width'], vmin = plot_vmin, vmax = plot_vmax)
                 
-                        
-                soxs.write_image(f"{evts_path}/{idx_instr_tag}_evt.fits", f"{evts_path}/{idx_instr_tag}_img.fits",  emin=self.emin, emax=self.emax, overwrite=True)
-                fig, ax = soxs.plot_image(f"{evts_path}/{idx_instr_tag}_img.fits", stretch=soxs_stretch, cmap=soxs_cmap, width = instrument['image_width'], vmin = plot_vmin, vmax = plot_vmax)
-                with astropy.io.fits.open(f"{evts_path}/{idx_instr_tag}_img.fits") as hdul:
-                    center = np.array([float(hdul[0].header['CRPIX1']),float(hdul[0].header['CRPIX2'])] )
-                    if calibration_markers:ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
-                    instrument_spec = instrument_registry[instrument_name]
+                # with astropy.io.fits.open(f"{evts_path}/{idx_instr_tag}_img.fits") as hdul:
+                #     center = np.array([float(hdul[0].header['CRPIX1']),float(hdul[0].header['CRPIX2'])] )
+                #     if calibration_markers:ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
+                #     instrument_spec = instrument_registry[instrument_name]
 
-                    if calibration_markers:
-                        try:
-                            chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
-                            ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        except:
-                            chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
-                            ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                plt.savefig(f"{evts_path}/{idx_instr_tag}_img.png")
-                fig.clear() 
-                plt.close(fig)
+                #     if calibration_markers:
+                #         try:
+                #             chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
+                #             ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                #             ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                #             ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                #             ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                #         except:
+                #             chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
+                #             ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                #             ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                #             ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                #             ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                # plt.savefig(f"{evts_path}/{idx_instr_tag}_img.png")
+                # fig.clear() 
+                # plt.close(fig)
 
                 if self._image_energies != None:   
                     for energy_dict in self._image_energies:
@@ -746,30 +756,30 @@ class Observation:
                     soxs.make_background_file(f"{evts_path}/{idx_instr_tag}_evt_foregrounds.fits", obs_exp_time,
                         instrument_name, [30., 45.], overwrite=True, foreground=True, instr_bkgnd=False,
                         ptsrc_bkgnd=False)     
-                    soxs.write_image(f"{evts_path}/{idx_instr_tag}_evt_foregrounds.fits", f"{evts_path}/{idx_instr_tag}_img_foregrounds.fits",  emin=self.emin, emax=self.emax, overwrite=True)
-                    fig, ax = soxs.plot_image(f"{evts_path}/{idx_instr_tag}_img_foregrounds.fits", stretch=soxs_stretch, cmap=soxs_cmap , width = instrument['image_width'])
-                    with astropy.io.fits.open(f"{evts_path}/{idx_instr_tag}_img_foregrounds.fits") as hdul:
-                        center = np.array([float(hdul[0].header['CRPIX1']),float(hdul[0].header['CRPIX2'])] )
-                        if calibration_markers:ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
-                        instrument_spec = instrument_registry[instrument_name]   
+                    # soxs.write_image(f"{evts_path}/{idx_instr_tag}_evt_foregrounds.fits", f"{evts_path}/{idx_instr_tag}_img_foregrounds.fits",  emin=self.emin, emax=self.emax, overwrite=True)
+                    # fig, ax = soxs.plot_image(f"{evts_path}/{idx_instr_tag}_img_foregrounds.fits", stretch=soxs_stretch, cmap=soxs_cmap , width = instrument['image_width'])
+                    # with astropy.io.fits.open(f"{evts_path}/{idx_instr_tag}_img_foregrounds.fits") as hdul:
+                    #     center = np.array([float(hdul[0].header['CRPIX1']),float(hdul[0].header['CRPIX2'])] )
+                    #     if calibration_markers:ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
+                    #     instrument_spec = instrument_registry[instrument_name]   
                     
-                    if calibration_markers:    
-                        try:
-                            chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
-                            ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                        except:
-                            chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
-                            ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    # if calibration_markers:    
+                    #     try:
+                    #         chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
+                    #         ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #         ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #         ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #         ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #     except:
+                    #         chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
+                    #         ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #         ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #         ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #         ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
                         
-                    plt.savefig(f"{evts_path}/{idx_instr_tag}_img_foregrounds.png")
-                    fig.clear() 
-                    plt.close(fig)
+                    # plt.savefig(f"{evts_path}/{idx_instr_tag}_img_foregrounds.png")
+                    # fig.clear() 
+                    # plt.close(fig)
                     
                     if self._image_energies != None:   
                         for energy_dict in self._image_energies:
@@ -996,30 +1006,30 @@ class Observation:
                                                          foreground=self._foreground, instr_bkgnd=self._instr_bkgnd, ptsrc_bkgnd=self._ptsrc_bkgnd, aimpt_shift = aim_shift)
                     soxs.write_spectrum(f"{evts_path}/{idx_instr_tag}_evt.fits", f"{evts_path}/{idx_instr_tag}_evt.pha", overwrite=True)        
                     
-                    soxs.write_image(f"{evts_path}/{idx_instr_tag}_evt.fits", f"{evts_path}/{idx_instr_tag}_img.fits",  emin=self.emin, emax=self.emax, overwrite=True)
-                    fig, ax = soxs.plot_image(f"{evts_path}/{idx_instr_tag}_img.fits", stretch='log', cmap='cubehelix',)
-                    with astropy.io.fits.open(f"{evts_path}/{idx_instr_tag}_img.fits") as hdul:
-                        center = np.array([float(hdul[0].header['CRPIX1']),float(hdul[0].header['CRPIX2'])] )
-                        if calibration_markers:ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
-                        instrument_spec = instrument_registry[instrument_name]
+                    # soxs.write_image(f"{evts_path}/{idx_instr_tag}_evt.fits", f"{evts_path}/{idx_instr_tag}_img.fits",  emin=self.emin, emax=self.emax, overwrite=True)
+                    # fig, ax = soxs.plot_image(f"{evts_path}/{idx_instr_tag}_img.fits", stretch='log', cmap='cubehelix',)
+                    # with astropy.io.fits.open(f"{evts_path}/{idx_instr_tag}_img.fits") as hdul:
+                    #     center = np.array([float(hdul[0].header['CRPIX1']),float(hdul[0].header['CRPIX2'])] )
+                    #     if calibration_markers:ax.scatter(center[0],center[1], c = "yellow", marker = "+", s = 1000000, linewidths= 0.5)
+                    #     instrument_spec = instrument_registry[instrument_name]
 
-                        if calibration_markers:
-                            try:
-                                chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
-                                ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                            except:
-                                chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
-                                ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
-                                ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #     if calibration_markers:
+                    #         try:
+                    #             chip_width = float(np.array(instrument_spec["chips"])[1][[3,4]][0])
+                    #             ax.scatter(center[0]+chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #             ax.scatter(center[0]-chip_width[0]/2,center[1]+chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #             ax.scatter(center[0]+chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #             ax.scatter(center[0]-chip_width[0]/2,center[1]-chip_width[1]/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #         except:
+                    #             chip_width = float(np.array(instrument_spec["chips"])[0][[3,4]][0])
+                    #             ax.scatter(center[0]+chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #             ax.scatter(center[0]-chip_width/2,center[1]+chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #             ax.scatter(center[0]+chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
+                    #             ax.scatter(center[0]-chip_width/2,center[1]-chip_width/2, c = "red", marker = "+", s = 1000, linewidths= 1)
                             
-                    plt.savefig(f"{evts_path}/{idx_instr_tag}_img.png")
-                    fig.clear() 
-                    plt.close(fig)
+                    # plt.savefig(f"{evts_path}/{idx_instr_tag}_img.png")
+                    # fig.clear() 
+                    # plt.close(fig)
                         
                     if self._image_energies != None:
                         for energy_dict in self._image_energies:
