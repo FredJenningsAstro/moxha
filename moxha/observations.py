@@ -880,7 +880,11 @@ class Observation:
             
             if delete_photon_files:
                 self._logger.info(f"Asked to delete photon files, so removing dir {photons_path}")
-                shutil.rmtree(photons_path) 
+                shutil.rmtree(photons_path, ignore_errors = True) 
+                
+        if delete_photon_files:
+            self._logger.info(f"Asked to delete photon files, so removing dir {photons_path}")
+            shutil.rmtree(photons_path, ignore_errors = True) 
         
             
             
