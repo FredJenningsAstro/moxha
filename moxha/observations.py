@@ -878,9 +878,6 @@ class Observation:
             os.remove(f"{self._idx_tag}_halo_phlist.fits"  )
             os.remove(f"{self._idx_tag}_halo_simput.fits" )
             
-            if delete_photon_files:
-                self._logger.info(f"Asked to delete photon files, so removing dir {photons_path}")
-                shutil.rmtree(photons_path, ignore_errors = True) 
                 
         if delete_photon_files:
             self._logger.info(f"Asked to delete photon files, so removing dir {photons_path}")
