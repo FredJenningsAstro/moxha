@@ -340,7 +340,7 @@ class Observation:
         return mufasa_rho_th
 
     
-    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = None, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, just_load_and_filter = False ):
+    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = None, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, just_load_and_filter = False, just_make_emission_fields = False ):
         '''
         Function to use pyXSIM to generate photon lists for the active halos and then project the photons. We use pyXSIM's CIE Source Model. 
         ------------------------------------------------
@@ -405,6 +405,11 @@ class Observation:
             self._cut_dataset()
         else:
             self._logger.info("No Cut being made on the data before observation")
+            
+            
+        if just_load_and_filter:
+            print("Returning obs.ds and am done for this halo since just_load_and_filter = True...")
+            return
 
         
         
@@ -493,7 +498,7 @@ class Observation:
             self._idx_tag = f"{self._run_ID}_h{str(halo_idx).zfill(3)}"
             photons_path = Path(self._top_save_path/"PHOTONS"/self._idx_tag)
             
-            if os.path.exists(f"{photons_path}/{self._idx_tag}_photons.h5") and os.path.exists(f"{photons_path}/{self._idx_tag}_halo_phlist.fits") and not overwrite and not only_profiles and not just_load_and_filter:
+            if os.path.exists(f"{photons_path}/{self._idx_tag}_photons.h5") and os.path.exists(f"{photons_path}/{self._idx_tag}_halo_phlist.fits") and not overwrite and not only_profiles and not just_load_and_filter and not just_make_emission_fields:
                 self._logger.info(f"{photons_path}/{self._idx_tag}_photons.h5 and {photons_path}/{self._idx_tag}_halo_phlist.fits already exist and overwrite == False, so we will skip making photons for this halo index.")
                 continue            
 
@@ -513,8 +518,8 @@ class Observation:
             if self.R200 != None:
                 self.sp_of_R200 = self.ds.sphere(halo_center, self.R200)
             
-            if just_load_and_filter:
-                print("Returning obs.ds and am done for this halo since just_load_and_filter = True...")
+            if just_make_emission_fields:
+                print("Returning obs.ds and am done for this halo since just_make_emission_fields = True...")
                 continue
             
             if make_phaseplots:
