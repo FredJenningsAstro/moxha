@@ -135,6 +135,8 @@ class Observation:
                     {"Name":"chandra_acisi_cy22", "aim_shift": [218, -283], "chip_width":1050, 'image_width':0.25 },
                     {"Name":"chandra_acisi_cy0_nogap", "aim_shift": [0, 0], "chip_width":2100, 'image_width':0.7 },
                     {"Name":"chandra_acisi_cy22_nogap", "aim_shift": [0, 0], "chip_width":2100, 'image_width':0.7 },
+                    # {"Name":"athena_xifu", "aim_shift": [-125 +  athena_chip_ctr_arcsec, 118 -  athena_chip_ctr_arcsec ], "chip_width":84 },
+                    
                 ]   
         except:
             raise RuntimeError('Default instrument values could not be loaded. Make sure instrument name is one of: athena_wfi, lem_0.9eV, lem_2eV')        
@@ -170,7 +172,9 @@ class Observation:
         try:
             defaults = [x for x in self._instrument_defaults if x["Name"] == Name ][0]
         except:
-            self._logger.error("Could Not Find instrument in MOXHA's defined instrument list!") 
+            self._logger.warning("Could Not Find instrument in MOXHA's defined instrument list! Default SOXS values will be used. This may mean that the aim point is not central, or that the calibration markings will be off.") 
+            defaults = {"Name":Name, "aim_shift": [0.0, 0.0], "chip_width":float(np.abs(soxs.instrument_registry[Name]['chips'][0][1])), 'image_width':1.0 }
+            
         if len(defaults) == 0:
             self._logger.error("Could Not Find instrument in MOXHA's defined instrument list!")     
         if len(self.active_instruments) == 0:
