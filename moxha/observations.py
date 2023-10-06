@@ -173,7 +173,7 @@ class Observation:
             defaults = [x for x in self._instrument_defaults if x["Name"] == Name ][0]
         except:
             self._logger.warning("Could Not Find instrument in MOXHA's defined instrument list! Default SOXS values will be used. This may mean that the aim point is not central, or that the calibration markings will be off.") 
-            defaults = {"Name":Name, "aim_shift": [0.0, 0.0], "chip_width":float(np.abs(soxs.instrument_registry[Name]['chips'][0][1])), 'image_width':1.0 }
+            defaults = {"Name":Name, "aim_shift": [0.0, 0.0], "chip_width":float(np.abs(soxs.instrument_registry[Name]['chips'][0][1][0])), 'image_width':1.0 }
             
         if len(defaults) == 0:
             self._logger.error("Could Not Find instrument in MOXHA's defined instrument list!")     
