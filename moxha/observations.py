@@ -530,7 +530,7 @@ class Observation:
                 self._yT_phaseplots()
 
             if make_profiles:
-                self._yT_profiles(profile_kwargs)
+                self._yT_profiles(**profile_kwargs)
             if only_profiles:
                 self._logger.info(f"only_profiles set to true, so we are done for this halo...")
                 continue
