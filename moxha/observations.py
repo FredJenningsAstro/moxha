@@ -344,7 +344,7 @@ class Observation:
         return mufasa_rho_th
 
     
-    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = None, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, just_load_and_filter = False, just_make_emission_fields = False ):
+    def MakePhotons(self, area = (2.5, "m**2"), nbins = 6000,  metals = None, photons_emin = 0.0, photons_emax = 10.0, model = "CIE APEC", nH_val = 0.018, absorb_model="tbabs", sphere_R500s = 5, const_metals = False, thermal_broad=True, orient_vec = (0,0,1), north_vector=None, generator_field = None, photon_sample_exp = None, only_profiles = False, make_profiles = True, make_phaseplots = True, overwrite = False, just_load_and_filter = False, just_make_emission_fields = False, profile_kwargs={} ):
         '''
         Function to use pyXSIM to generate photon lists for the active halos and then project the photons. We use pyXSIM's CIE Source Model. 
         ------------------------------------------------
@@ -530,7 +530,7 @@ class Observation:
                 self._yT_phaseplots()
 
             if make_profiles:
-                self._yT_profiles()
+                self._yT_profiles(profile_kwargs)
             if only_profiles:
                 self._logger.info(f"only_profiles set to true, so we are done for this halo...")
                 continue
@@ -1088,10 +1088,15 @@ class Observation:
         
 
 
-    def _yT_profiles(self):
+    def _yT_profiles(self, profile_min_radius=0.05, profile_max_radius=1.2, profiles_save_path = None, **profile_kwargs):
+        
         self._logger.info(f"Generating yT Profiles")
-        yt_data_path = Path(self._top_save_path/"YT_DATA"/self._idx_tag)
-        os.makedirs(yt_data_path, exist_ok = True)   
+        
+        if profiles_save_path == None:
+            profiles_save_path = Path(self._top_save_path/"YT_DATA"/self._idx_tag)
+        
+        
+        os.makedirs(profiles_save_path, exist_ok = True)   
         n_bins = 50
         
         ptype = "filtered_gas" # ["PartType0","PartType1","PartType4","PartType5"]
@@ -1102,7 +1107,7 @@ class Observation:
         #     # if field[0] == ptype:
         #         print(field)
         self._logger.info(f"Emmission-Weighted quantities being calculated with {lumin_field} and {emis_field}")
-        rp_total_mass = yt.create_profile(self.sp,("all",'particle_position_spherical_radius'), extrema = {("all",'particle_position_spherical_radius'):(0.05*self.R500, 1.2*self.R500)},
+        rp_total_mass = yt.create_profile(self.sp,("all",'particle_position_spherical_radius'), extrema = {("all",'particle_position_spherical_radius'):(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields = [("all", 'Masses')],
                                units={("all",'particle_position_spherical_radius'): "kpc", ("all", 'Masses'):"Msun"},logs={("all",'particle_position_spherical_radius'): False},
                                weight_field = None,
@@ -1110,7 +1115,7 @@ class Observation:
                                n_bins = n_bins)
         self._logger.info(f"Halo {self._idx_tag}: Successfully read True Total Mass Profile from Dataset") 
         
-        rp_kT_EW = yt.create_profile(self.sp,radius, extrema = {radius:(0.05*self.R500, 1.2*self.R500)},
+        rp_kT_EW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'temperature')],
                                units={radius: "kpc", (ptype, 'temperature'):"K"},logs={radius: False},
                                weight_field = (ptype, emis_field) ,
@@ -1118,7 +1123,7 @@ class Observation:
                                n_bins = n_bins)    
         self._logger.info(f"Halo {self._idx_tag}: Successfully read Emmissivity-Weighted kT Profile from Dataset")
         
-        rp_ne_EW = yt.create_profile(self.sp,radius, extrema = {radius:(0.05*self.R500, 1.2*self.R500)},
+        rp_ne_EW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'El_number_density')],
                                units={radius: "kpc", (ptype, 'El_number_density'):"cm**-3"},logs={radius: False},
                                weight_field = (ptype, emis_field),
@@ -1126,7 +1131,7 @@ class Observation:
                                n_bins = n_bins)  
         self._logger.info(f"Halo {self._idx_tag}: Successfully read Emmissivity-Weighted ne Profile from Dataset")
         
-        rp_kT_LuminW = yt.create_profile(self.sp,radius, extrema = {radius:(0.05*self.R500, 1.2*self.R500)},
+        rp_kT_LuminW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'temperature')],
                                units={radius: "kpc", (ptype, 'temperature'):"K"},logs={radius: False},
                                weight_field = (ptype, lumin_field) ,
@@ -1134,7 +1139,7 @@ class Observation:
                                n_bins = n_bins)    
         self._logger.info(f"Halo {self._idx_tag}: Successfully read Luminosity-Weighted kT Profile from Dataset")
         
-        rp_ne_LuminW = yt.create_profile(self.sp,radius, extrema = {radius:(0.05*self.R500, 1.2*self.R500)},
+        rp_ne_LuminW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'El_number_density')],
                                units={radius: "kpc", (ptype, 'El_number_density'):"cm**-3"},logs={radius: False},
                                weight_field = (ptype, lumin_field),
@@ -1142,7 +1147,7 @@ class Observation:
                                n_bins = n_bins)  
         self._logger.info(f"Halo {self._idx_tag}: Successfully read Luminosity-Weighted ne Profile from Dataset")
         
-        rp_kT_filtGasMassW = yt.create_profile(self.sp,radius, extrema = {radius:(0.05*self.R500, 1.2*self.R500)},
+        rp_kT_filtGasMassW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'temperature')],
                                units={radius: "kpc", (ptype, 'temperature'):"K"},logs={radius: False},
                                weight_field = (ptype, "mass") ,
@@ -1150,7 +1155,7 @@ class Observation:
                                n_bins = n_bins)    
         self._logger.info(f"Halo {self._idx_tag}: Successfully read Mass-Weighted kT Profile from Dataset")
         
-        rp_ne_filtGasMassW = yt.create_profile(self.sp,radius, extrema = {radius:(0.05*self.R500, 1.2*self.R500)},
+        rp_ne_filtGasMassW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'El_number_density')],
                                units={radius: "kpc", (ptype, 'El_number_density'):"cm**-3"},logs={radius: False},
                                weight_field = (ptype, "mass"),
@@ -1158,7 +1163,7 @@ class Observation:
                                n_bins = n_bins)  
         self._logger.info(f"Halo {self._idx_tag}: Successfully read Mass-Weighted ne Profile from Dataset")
         
-        rp_Lx_RAW = yt.create_profile(self.sp,radius, extrema = {radius:(0.05*self.R500, 1.2*self.R500)},
+        rp_Lx_RAW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, lumin_field)],
                                units={radius: "kpc", (ptype, lumin_field) :"erg/s"},logs={radius: False},
                                weight_field = None,
@@ -1208,7 +1213,7 @@ class Observation:
         
         
         self._logger.info("yT Data Successfully Taken")
-        np.save(f"{yt_data_path}/{self._idx_tag}_yt_data_pyxsim.npy",rp_data)  
+        np.save(f"{profiles_save_path}/{self._idx_tag}_yt_data_pyxsim.npy",rp_data)  
 
 
 
