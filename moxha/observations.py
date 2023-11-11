@@ -1088,7 +1088,7 @@ class Observation:
         
 
 
-    def _yT_profiles(self, profile_min_radius=0.05, profile_max_radius=1.2, profiles_save_path = None, **profile_kwargs):
+    def _yT_profiles(self, profile_min_radius=0.05, profile_max_radius=1.2, profiles_save_path = None, n_bins = 50, **profile_kwargs):
         
         self._logger.info(f"Generating yT Profiles")
         
@@ -1097,7 +1097,7 @@ class Observation:
         
         
         os.makedirs(profiles_save_path, exist_ok = True)   
-        n_bins = 50
+        
         
         ptype = "filtered_gas" # ["PartType0","PartType1","PartType4","PartType5"]
         lumin_field = str(f"xray_luminosity_{self.emin_for_EW_values}_{self.emax_for_EW_values}_keV")
