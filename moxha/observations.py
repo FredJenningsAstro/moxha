@@ -317,7 +317,18 @@ class Observation:
             units="",
         )
         
-        self._logger.info("Pressure, Sound Speed, and Mach Number fields Calculated Assuming Gamma=5/3")
+        def _internal_energy(field, data):
+            mu = 0.59 #mu = 0.59 #https://arxiv.org/pdf/2001.11508.pdf
+            return 1.5 * data["gas",  'kT'] * data["gas",  'mass'] / (mu * unyt.mp)    
+        
+        self.ds.add_field(
+            name=("gas", "InternalEnergy"),
+            function=_internal_energy,
+            sampling_type="local",
+            units="erg",
+        )
+        
+        self._logger.info("Internal Energy, Pressure, Sound Speed, and Mach Number fields Calculated Assuming Gamma=5/3")
         
         if make_grad_fields:
             self.ds.force_periodicity()
