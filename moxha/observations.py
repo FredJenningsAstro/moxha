@@ -1088,7 +1088,7 @@ class Observation:
         
 
 
-    def _yT_profiles(self, profile_min_radius=0.05, profile_max_radius=1.2, profiles_save_path = None, n_bins = 50, **profile_kwargs):
+    def _yT_profiles(self, profile_min_radius=3e-4, profile_max_radius=1.2, profiles_save_path = None, n_bins = 50, **profile_kwargs):
         
         self._logger.info(f"Generating yT Profiles")
         
