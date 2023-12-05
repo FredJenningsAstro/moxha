@@ -1117,7 +1117,7 @@ class Observation:
         
         rp_kT_EW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'temperature')],
-                               units={radius: "kpc", (ptype, 'temperature'):"K"},logs={radius: False},
+                               units={radius: "kpc", (ptype, 'temperature'):"K"},logs={radius: True},
                                weight_field = (ptype, emis_field) ,
                                accumulation = False,
                                n_bins = n_bins)    
@@ -1125,7 +1125,7 @@ class Observation:
         
         rp_ne_EW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'El_number_density')],
-                               units={radius: "kpc", (ptype, 'El_number_density'):"cm**-3"},logs={radius: False},
+                               units={radius: "kpc", (ptype, 'El_number_density'):"cm**-3"},logs={radius: True},
                                weight_field = (ptype, emis_field),
                                accumulation = False,
                                n_bins = n_bins)  
@@ -1133,7 +1133,7 @@ class Observation:
         
         rp_kT_LuminW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'temperature')],
-                               units={radius: "kpc", (ptype, 'temperature'):"K"},logs={radius: False},
+                               units={radius: "kpc", (ptype, 'temperature'):"K"},logs={radius: True},
                                weight_field = (ptype, lumin_field) ,
                                accumulation = False,
                                n_bins = n_bins)    
@@ -1141,7 +1141,7 @@ class Observation:
         
         rp_ne_LuminW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'El_number_density')],
-                               units={radius: "kpc", (ptype, 'El_number_density'):"cm**-3"},logs={radius: False},
+                               units={radius: "kpc", (ptype, 'El_number_density'):"cm**-3"},logs={radius: True},
                                weight_field = (ptype, lumin_field),
                                accumulation = False,
                                n_bins = n_bins)  
@@ -1149,7 +1149,7 @@ class Observation:
         
         rp_kT_filtGasMassW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'temperature')],
-                               units={radius: "kpc", (ptype, 'temperature'):"K"},logs={radius: False},
+                               units={radius: "kpc", (ptype, 'temperature'):"K"},logs={radius: True},
                                weight_field = (ptype, "mass") ,
                                accumulation = False,
                                n_bins = n_bins)    
@@ -1157,19 +1157,29 @@ class Observation:
         
         rp_ne_filtGasMassW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'El_number_density')],
-                               units={radius: "kpc", (ptype, 'El_number_density'):"cm**-3"},logs={radius: False},
+                               units={radius: "kpc", (ptype, 'El_number_density'):"cm**-3"},logs={radius: True},
                                weight_field = (ptype, "mass"),
                                accumulation = False,
                                n_bins = n_bins)  
         self._logger.info(f"Halo {self._idx_tag}: Successfully read Mass-Weighted ne Profile from Dataset")
         
-        rp_Lx_RAW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
-                               fields=[(ptype, lumin_field)],
-                               units={radius: "kpc", (ptype, lumin_field) :"erg/s"},logs={radius: False},
+        # rp_Lx_RAW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
+        #                        fields=[(ptype, lumin_field)],
+        #                        units={radius: "kpc", (ptype, lumin_field) :"erg/s"},logs={radius: True},
+        #                        weight_field = None,
+        #                        accumulation = False,
+        #                        n_bins = n_bins)   
+        # self._logger.info(f"Halo {self._idx_tag}: Successfully read True Luminosity Profile from Dataset")    
+        
+        
+        
+        accumulated_internal_E_RAW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
+                               fields=[(ptype, 'InternalEnergy')],
+                               units={radius: "kpc", (ptype, 'InternalEnergy') :"erg"},logs={radius: True},
                                weight_field = None,
-                               accumulation = False,
+                               accumulation = True,
                                n_bins = n_bins)   
-        self._logger.info(f"Halo {self._idx_tag}: Successfully read True Luminosity Profile from Dataset")       
+        self._logger.info(f"Halo {self._idx_tag}: Successfully read True internal E Profile from Dataset")     
         
 
         rp_data = []
@@ -1186,14 +1196,14 @@ class Observation:
                 lx_r = self.R200
             else:
                 lx_r = self.R500    
-            Lx_profile = yt.create_profile(self.sp,radius, extrema = {radius:(0.01*self.R500, 1.2*lx_r)},
+            Lx_profile = yt.create_profile(self.sp,radius, extrema = {radius:(0.0, 1.2*lx_r)},
                         fields=[(ptype, lumin_field_for_Lx_tot)],
-                        units={radius: "kpc", (ptype, lumin_field_for_Lx_tot) :"erg/s"},logs={radius: False},
+                        units={radius: "kpc", (ptype, lumin_field_for_Lx_tot) :"erg/s"},logs={radius: True},
                         weight_field = None,
-                        accumulation = False,
+                        accumulation = True,
                         n_bins = n_bins)   
             print(f"Saving radial profile for the luminosity with xray_luminosity_{emin_for_Lx_tot}_{emax_for_Lx_tot}_keV")
-            rp_data.append(  {"Name":f"Lx_profile_{emin_for_Lx_tot}_{emax_for_Lx_tot}_keV","radius":Lx_profile.x.to_astropy(), "values":Lx_profile[(ptype, lumin_field_for_Lx_tot)].to_astropy()  })
+            rp_data.append(  {"Name":f"{lumin_field_for_Lx_tot}_accumulated","radius":Lx_profile.x.to_astropy(), "values":Lx_profile[(ptype, lumin_field_for_Lx_tot)].to_astropy()  })
                 
         
         
@@ -1208,8 +1218,13 @@ class Observation:
         rp_data.append(  {"Name":f"kT_filtGasMassW","radius":rp_kT_filtGasMassW.x.to_astropy(), "values":rp_kT_filtGasMassW[(ptype,'temperature')].to_astropy() })
         rp_data.append(  {"Name":f"ne_filtGasMassW","radius":rp_ne_filtGasMassW.x.to_astropy(), "values":rp_ne_filtGasMassW[(ptype,'El_number_density')].to_astropy()  })
         
-        rp_data.append(  {"Name":"Lx_raw","radius":rp_Lx_RAW.x.to_astropy(), "values":rp_Lx_RAW[(ptype, lumin_field)].to_astropy()  })
+        # rp_data.append(  {"Name":"Lx_raw","radius":rp_Lx_RAW.x.to_astropy(), "values":rp_Lx_RAW[(ptype, lumin_field)].to_astropy()  })
         rp_data.append(  {"Name":"Total_Mass","radius":rp_total_mass.x.to_astropy(), "values": rp_total_mass[("all", 'Masses')].to_astropy()  }) 
+        
+        
+        
+        accumulated_internal_E_RAW
+        rp_data.append(  {"Name":"Accumulated Internal Energy","radius":accumulated_internal_E_RAW.x.to_astropy(), "values": accumulated_internal_E_RAW[(ptype, 'InternalEnergy')].to_astropy()  })
         
         
         self._logger.info("yT Data Successfully Taken")
