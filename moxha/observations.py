@@ -1196,7 +1196,7 @@ class Observation:
                 lx_r = self.R200
             else:
                 lx_r = self.R500    
-            Lx_profile = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*, 1.2*lx_r)},
+            Lx_profile = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, 1.2*lx_r)},
                         fields=[(ptype, lumin_field_for_Lx_tot)],
                         units={radius: "kpc", (ptype, lumin_field_for_Lx_tot) :"erg/s"},logs={radius: True},
                         weight_field = None,
