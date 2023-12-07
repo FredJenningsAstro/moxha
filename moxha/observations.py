@@ -1207,7 +1207,7 @@ class Observation:
                 lx_r = self.R200
             else:
                 lx_r = self.R500    
-            Lx_profile = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, 1.2*lx_r)},
+            Lx_profile = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                         fields=[(ptype, lumin_field_for_Lx_tot)],
                         units={radius: "kpc", (ptype, lumin_field_for_Lx_tot) :"erg/s"},logs={radius: True},
                         weight_field = None,
@@ -1233,8 +1233,6 @@ class Observation:
         rp_data.append(  {"Name":"Total_Mass","radius":rp_total_mass.x.to_astropy(), "values": rp_total_mass[("all", 'Masses')].to_astropy()  }) 
         
         
-        
-        accumulated_internal_E_RAW
         rp_data.append(  {"Name":"Accumulated Internal Energy","radius":accumulated_internal_E_RAW.x.to_astropy(), "values": accumulated_internal_E_RAW[(ptype, 'InternalEnergy')].to_astropy()  })
         
         
