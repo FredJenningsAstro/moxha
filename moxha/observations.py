@@ -1182,7 +1182,13 @@ class Observation:
         #                        n_bins = n_bins)   
         # self._logger.info(f"Halo {self._idx_tag}: Successfully read True Luminosity Profile from Dataset")    
         
-        
+        internal_E_RAW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
+                               fields=[(ptype, 'InternalEnergy')],
+                               units={radius: "kpc", (ptype, 'InternalEnergy') :"erg"},logs={radius: True},
+                               weight_field = None,
+                               accumulation = False,
+                               n_bins = n_bins)   
+        self._logger.info(f"Halo {self._idx_tag}: Successfully read True internal E Profile from Dataset")          
         
         accumulated_internal_E_RAW = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
                                fields=[(ptype, 'InternalEnergy')],
@@ -1215,6 +1221,15 @@ class Observation:
                         n_bins = n_bins)   
             print(f"Saving radial profile for the luminosity with xray_luminosity_{emin_for_Lx_tot}_{emax_for_Lx_tot}_keV")
             rp_data.append(  {"Name":f"{lumin_field_for_Lx_tot}_accumulated","radius":Lx_profile.x.to_astropy(), "values":Lx_profile[(ptype, lumin_field_for_Lx_tot)].to_astropy()  })
+            
+            Lx_profile_nonaccum = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
+                        fields=[(ptype, lumin_field_for_Lx_tot)],
+                        units={radius: "kpc", (ptype, lumin_field_for_Lx_tot) :"erg/s"},logs={radius: True},
+                        weight_field = None,
+                        accumulation = False,
+                        n_bins = n_bins)   
+            print(f"Saving radial profile for the luminosity with xray_luminosity_{emin_for_Lx_tot}_{emax_for_Lx_tot}_keV")
+            rp_data.append(  {"Name":f"{lumin_field_for_Lx_tot}","radius":Lx_profile_nonaccum.x.to_astropy(), "values":Lx_profile_nonaccum[(ptype, lumin_field_for_Lx_tot)].to_astropy()  })
                 
         
         
@@ -1234,6 +1249,7 @@ class Observation:
         
         
         rp_data.append(  {"Name":"Accumulated Internal Energy","radius":accumulated_internal_E_RAW.x.to_astropy(), "values": accumulated_internal_E_RAW[(ptype, 'InternalEnergy')].to_astropy()  })
+        rp_data.append(  {"Name":"Internal Energy","radius":internal_E_RAW.x.to_astropy(), "values": internal_E_RAW[(ptype, 'InternalEnergy')].to_astropy()  })
         
         
         self._logger.info("yT Data Successfully Taken")
