@@ -327,6 +327,22 @@ class Observation:
             sampling_type="local",
             units="erg",
         )
+
+        def _internal_energy_for_tcool(field, data):
+            mu = 0.59 #mu = 0.59 #https://arxiv.org/pdf/2001.11508.pdf
+            return 2.5 * data["gas",  'kT'] * data["gas",  'mass'] / (mu * unyt.mp)    
+        
+        self.ds.add_field(
+            name=("gas", "InternalEnergy_for_tcool"),
+            function=_internal_energy_for_tcool,
+            sampling_type="local",
+            units="erg",
+        )        
+        
+        
+        
+        
+        
         
         self._logger.info("Internal Energy, Pressure, Sound Speed, and Mach Number fields Calculated Assuming Gamma=5/3")
         
@@ -1198,6 +1214,15 @@ class Observation:
                                n_bins = n_bins)   
         self._logger.info(f"Halo {self._idx_tag}: Successfully read True internal E Profile from Dataset")     
         
+        
+        accumulated_internal_E_RAW_for_tcool = yt.create_profile(self.sp,radius, extrema = {radius:(profile_min_radius*self.R500, profile_max_radius*self.R500)},
+                               fields=[(ptype, 'InternalEnergy_for_tcool')],
+                               units={radius: "kpc", (ptype, 'InternalEnergy_for_tcool') :"erg"},logs={radius: True},
+                               weight_field = None,
+                               accumulation = True,
+                               n_bins = n_bins)   
+        self._logger.info(f"Halo {self._idx_tag}: Successfully read True internal E Profile for T_cool from Dataset")     
+        
 
         rp_data = []
         
@@ -1250,7 +1275,10 @@ class Observation:
         
         rp_data.append(  {"Name":"Accumulated Internal Energy","radius":accumulated_internal_E_RAW.x.to_astropy(), "values": accumulated_internal_E_RAW[(ptype, 'InternalEnergy')].to_astropy()  })
         rp_data.append(  {"Name":"Internal Energy","radius":internal_E_RAW.x.to_astropy(), "values": internal_E_RAW[(ptype, 'InternalEnergy')].to_astropy()  })
+        rp_data.append(  {"Name":"Accumulated Internal Energy for Tcool","radius":accumulated_internal_E_RAW_for_tcool.x.to_astropy(), "values": accumulated_internal_E_RAW_for_tcool[(ptype, 'InternalEnergy_for_tcool')].to_astropy()  })
         
+        
+        accumulated_internal_E_RAW_for_tcool
         
         self._logger.info("yT Data Successfully Taken")
         np.save(f"{profiles_save_path}/{self._idx_tag}_yt_data_pyxsim.npy",rp_data)  
