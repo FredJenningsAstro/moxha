@@ -930,7 +930,7 @@ class Observation:
                 else:
                     self._logger.info(f"Observering with {instrument_name} with exp time of {obs_exp_time} and with pointings {pointing_list}")
                     obs_list = soxs.make_mosaic_events(pointing_list, f"{self._idx_tag}_halo_mosaic.simput", f"{evts_path}/{idx_instr_tag}_mosaic", obs_exp_time,
-                                            instrument_name, [30., 45.], overwrite=True, instr_bkgnd = self._instr_bkgnd, foreground=self._foreground, ptsrc_bkgnd =self._ptsrc_bkgnd, aimpt_shift = aim_shift, no_dither = no_dither)
+                                            instrument_name, overwrite=True, instr_bkgnd = self._instr_bkgnd, foreground=self._foreground, ptsrc_bkgnd =self._ptsrc_bkgnd, aimpt_shift = aim_shift, no_dither = no_dither)
                     
                     
                     self._write_log("obs",f"Instrument Simulation Complete")
