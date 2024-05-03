@@ -959,6 +959,7 @@ class Observation:
                     if self._image_energies != None:   
                         for energy_dict in self._image_energies:
                             # soxs.write_image(f"{evts_path}/{idx_instr_tag}_evt.fits", f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}.fits", emin=energy_dict['emin'], emax=energy_dict['emax'], overwrite=True,)
+                            ''' The evt_file stuff below happens in SOXS before any of the exposure_map stuff so we should not give it a label for the exposure map.'''
                             mosaic_expmap_E = (float(energy_dict['emin'])+float(energy_dict['emax']))/2
                             soxs.make_mosaic_image(obs_list, f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}_combinedMosaic_expmapE={mosaic_expmap_E}.fits", evt_file = f"{evts_path}/{idx_instr_tag}_combinedMosaic_evt.fits",
                                                    emin=energy_dict['emin'], emax=energy_dict['emax'], overwrite=True,
