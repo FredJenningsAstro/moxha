@@ -960,12 +960,16 @@ class Observation:
                         for energy_dict in self._image_energies:
                             # soxs.write_image(f"{evts_path}/{idx_instr_tag}_evt.fits", f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}.fits", emin=energy_dict['emin'], emax=energy_dict['emax'], overwrite=True,)
                             mosaic_expmap_E = (float(energy_dict['emin'])+float(energy_dict['emax']))/2
-                            soxs.make_mosaic_image(obs_list, f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}_combinedMosaic_expmapE={mosaic_expmap_E}.fits", emin=energy_dict['emin'], emax=energy_dict['emax'], overwrite=True,
+                            soxs.make_mosaic_image(obs_list, f"{evts_path}/{idx_instr_tag}_img_{energy_dict['name']}_combinedMosaic_expmapE={mosaic_expmap_E}.fits", evt_file = f"{evts_path}/{idx_instr_tag}_combinedMosaic_evt.fits",
+                                                   emin=energy_dict['emin'], emax=energy_dict['emax'], overwrite=True,
                                                     use_expmap=True, expmap_energy=mosaic_expmap_E)
 
           
                             
-                            
+                    soxs.write_spectrum(f"{evts_path}/{idx_instr_tag}_combinedMosaic_evt.fits", f"{evts_path}/{idx_instr_tag}_combinedMosaic.pha", overwrite=True)
+                    
+                    
+                    
                     if write_foreground_spectrum and foreground:
                         self._logger.info(f"Making foregrond plots for {instrument_name}")
                         soxs.make_background_file(f"{evts_path}/{idx_instr_tag}_evt_foregrounds.fits", obs_exp_time,
